@@ -1136,6 +1136,8 @@ def make_upgrade10_eif_string_for_tables(file_name):
             file_name_lower == 'remoterolesdocsettings':
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ один ВЫЗОВ ubRoles, в этой data нужно оставить " \
                  "дельту изменений remoterolesactions можно оставить полностью>"
+    elif file_name_lower.startswith('bs3'):
+        result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ ВЫЗОВ ua-шки  >"
     elif file_name_lower == 'freedoctype':
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ ВЫЗОВ ua-шки  >"
     else:  # Если заливается структура полностью
