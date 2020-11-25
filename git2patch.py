@@ -52,6 +52,9 @@ DIR_COMPARED_RTF_REPJET = os.path.join(DIR_COMPARED_RTF, 'RepJet')
 DIR_PATCH = os.path.join(DIR_TEMP, 'PATCH')
 
 
+def dir_after_base(instance): return os.path.join(os.path.join(DIR_AFTER, 'BASE'), instance)
+
+
 def dir_compared_base(instance): return os.path.join(os.path.join(DIR_COMPARED, 'BASE'), instance)
 
 
@@ -1209,7 +1212,7 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
 
 
 # -------------------------------------------------------------------------------------------------
-def download_table_10_files_for_data_files(instance):
+def copy_table_10_files_for_data_files(instance):
     eif_list = list_files_of_all_subdirectories(dir_compared_base(instance), "*.eif")
     for eif_file in eif_list:
         # проверим соответствует ли название файла формату "*(data).eif"
@@ -1221,10 +1224,10 @@ def download_table_10_files_for_data_files(instance):
             # и проверим есть ли файл eif10_file в списке файлов eif_list
             exists = [file1 for file1 in eif_list if re.search(re.escape(eif10_file), file1)]
             if not exists:
-                source_dir = os.path.join(DIR_AFTER, 'BASE', instance, 'TABLES')
-                dest_dir = os.path.join(DIR_COMPARED, 'BASE', instance, 'TABLES')
+                source_dir = os.path.join(dir_after_base(instance), 'TABLES')
+                dest_dir = os.path.join(dir_compared_base(instance), 'TABLES')
                 log('COPYING {} from {} to {}'.format(eif10_file, source_dir, dest_dir))
-                copy_files_from_dir(source_dir, dest_dir, eif10_file)
+                copy_files_from_dir(source_dir, dest_dir, [eif10_file])
 
 
 # -------------------------------------------------------------------------------------------------
@@ -2013,7 +2016,7 @@ def patch():
             log('EXIT')
             return
         for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
-            download_table_10_files_for_data_files(instance)
+            copy_table_10_files_for_data_files(instance)
             generate_upgrade10_eif(instance)
         continue_compilation = copy_bls(True, DIR_COMPARED_BLS, dir_patch_libfiles_source())
         need_download_build = continue_compilation or global_settings.PlaceBuildIntoPatchBK or global_settings.PlaceBuildIntoPatchIC
