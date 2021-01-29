@@ -1015,7 +1015,7 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
                                                   os.path.join(after, directory),
                                                   os.path.join(where_to_copy, directory))
 
-    if dircmp.diff_files:
+    if len(dircmp.diff_files):
         for file in dircmp.diff_files:
             path = os.path.join(after, file)
             if os.path.isfile(path):
@@ -1024,6 +1024,18 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
                 shutil.copy2(path, where_to_copy)
             else:
                 log('\tsomething wrong {} -> {}'.format(path, where_to_copy))
+
+    if len(dircmp.same_files):
+        match, mismatch, errors = filecmp.cmpfiles(before, after, dircmp.same_files, shallow=False)
+        if len(mismatch):
+            for file in mismatch:
+                path = os.path.join(after, file)
+                if os.path.isfile(path):
+                    log('\tcopying after deep comparition {}'.format(path))
+                    make_dirs(where_to_copy)
+                    shutil.copy2(path, where_to_copy)
+                else:
+                    log('\tsomething wrong {} -> {}'.format(path, where_to_copy))
 
     if dircmp.right_only:
         for file in dircmp.right_only:
