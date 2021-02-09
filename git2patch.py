@@ -309,6 +309,9 @@ def dir_patch_libfiles_template_language_ru_client_system(): return os.path.join
 def get_filename_upgrade10_eif(instance): return os.path.join(dir_patch(instance), 'Upgrade(10).eif')
 
 
+def get_filename_jira_tickets(): return os.path.join(DIR_PATCH, 'jira_tickets.txt')
+
+
 # -------------------------------------------------------------------------------------------------
 def current_time_as_string(): return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -2001,6 +2004,26 @@ def make_decision_compilation_or_restart():
     return continue_compilation
 
 
+def get_git_log(settings):
+    from_tag = settings.TagBefore
+    to_tag = settings.TagAfter
+    git_repo = Repo.init(DIR_AFTER)
+    git = git_repo.git
+    log_items = git.log('--format=%B', '--no-merges', '--abbrev-commit', '{}..{}'.format(from_tag, to_tag)).split('\n')
+    jira_tickets = ''
+    for item in log_items:
+        found = re.findall(r'/?\w+-\d+', item)
+        for jira_ticket in found:
+            jira_tickets += jira_ticket.replace('/','') + ','
+
+    if jira_tickets != '':
+        file_name = get_filename_jira_tickets()
+        make_dirs(os.path.dirname(file_name))
+        with open(file_name, mode='w') as f:
+            log('JIRA TICKETS from "{}" to "{}" saved to {}'.format(from_tag, to_tag, file_name))
+            f.writelines(jira_tickets)
+
+
 # -------------------------------------------------------------------------------------------------
 def patch():
     log('=' * 120)
@@ -2014,7 +2037,7 @@ def patch():
         if not clean(DIR_TEMP):
             log('FAILED')
             return
-        log('PATCH COMPILATION BEGIN')
+        log('PATCH PREPARATION BEGIN')
     else:
         log('BLS COMPILATION BEGIN')
 
@@ -2024,9 +2047,11 @@ def patch():
         if not download_from_git(global_settings):
             log('FAILED')
             return
+
         if not compare_directories_before_and_after():
             log('EXIT')
             return
+
         for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
             copy_table_10_files_for_data_files(instance)
             generate_upgrade10_eif(instance)
@@ -2060,6 +2085,8 @@ def patch():
                            global_settings.BLLVersion):
             # копируем готовые BLL в патч
             copy_bll(global_settings)
+
+    get_git_log(global_settings)
     log('DONE')
 
 
