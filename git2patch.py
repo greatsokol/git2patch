@@ -2047,10 +2047,6 @@ def patch():
         if not download_from_git(global_settings):
             log('FAILED')
             return
-        get_git_log(global_settings)
-        exit(-1)
-
-
         if not compare_directories_before_and_after():
             log('EXIT')
             return
