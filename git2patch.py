@@ -2010,18 +2010,18 @@ def get_git_log(settings):
     git_repo = Repo.init(DIR_AFTER)
     git = git_repo.git
     log_items = git.log('--format=%B', '--no-merges', '--abbrev-commit', '{}..{}'.format(from_tag, to_tag)).split('\n')
-    jira_tickets = ''
-    for item in log_items:
-        found = re.findall(r'/?\w+-\d+', item)
+    jira_tickets = []
+    for log_item in log_items:
+        found = re.findall(r'/?\w+-\d+', log_item)
         for jira_ticket in found:
-            jira_tickets += jira_ticket.replace('/','') + ','
-
-    if jira_tickets != '':
+            jira_tickets.append(jira_ticket.replace('/',''))
+    if jira_tickets:
         file_name = get_filename_jira_tickets()
         make_dirs(os.path.dirname(file_name))
         with open(file_name, mode='w') as f:
             log('JIRA TICKETS from "{}" to "{}" saved to {}'.format(from_tag, to_tag, file_name))
-            f.writelines(jira_tickets)
+            jira_tickets = list(dict.fromkeys(jira_tickets))  # removing duplicates
+            f.writelines(','.join(jira_tickets))
 
 
 # -------------------------------------------------------------------------------------------------
@@ -2047,6 +2047,9 @@ def patch():
         if not download_from_git(global_settings):
             log('FAILED')
             return
+        get_git_log(global_settings)
+        exit(-1)
+
 
         if not compare_directories_before_and_after():
             log('EXIT')
