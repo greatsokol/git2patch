@@ -1417,7 +1417,7 @@ def bls_get_uses_graph(path):
                 # удаляем однострочные комментарии, которые начинаются на "//"
                 text = __replace_unwanted_symbols__(r'//.*', text)
                 # находим текст между словом "uses" и ближайшей точкой с запятой
-                list_of_uses = re.findall(r'(?<=\buses\s)(?s)(.*?)(?=;)', text, flags=re.IGNORECASE | re.MULTILINE)
+                list_of_uses = re.findall(r'(?s)(?<=\buses\s)(.*?)(?=;)', text, flags=re.IGNORECASE)
 
                 file_name_without_path = split_filename(file_name).lower()
                 # добавляем пустой элемент для файла "file_name", на случай, если файл не имеет uses
@@ -1507,7 +1507,7 @@ def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
 
 # -------------------------------------------------------------------------------------------------
 def bls_compile_all(lic_server, lic_profile, build_path, source_path, bll_version):
-    clean(build_path, ['*.bls', '*.bll'])  # очищаем каталог билда от bls и bll
+    clean(build_path, ['*.bls', '*.bll', '*.ClassInfo'])  # очищаем каталог билда от bls и bll
     log('BEGIN BLS COMPILATION. Please wait...')
     copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'], [])  # копируем в каталог билда все bls
     bls_uses_graph = bls_get_uses_graph(build_path)  # строим граф зависимостей по строкам uses
