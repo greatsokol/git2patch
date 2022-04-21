@@ -22,8 +22,8 @@ except ModuleNotFoundError as e:
 
 # -------------------------------------------------------------------------------------------------
 python_version = sys.version.split(' ', 1)[0]
-if python_version < '3.6':
-    print('Error: Version of python interpreter should start from 3.6 ({})'.format(python_version))
+if python_version < '3.10':
+    print('Error: Version of python interpreter should start from 3.10 ({})'.format(python_version))
     quit(-1)
 
 EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=100, thread_name_prefix='thread')
@@ -43,7 +43,10 @@ DIR_COMPARED = os.path.join(DIR_TEMP, '_COMPARE_RESULT')
 DIR_COMPARED_BLS = os.path.join(DIR_COMPARED, 'BLS')
 DIR_COMPARED_BLS_SOURCE = os.path.join(DIR_COMPARED_BLS, 'SOURCE')
 DIR_COMPARED_BLS_SOURCE_RCK = os.path.join(DIR_COMPARED_BLS_SOURCE, 'RCK')
+DIR_COMPARED_CommonLibraries = os.path.join(DIR_COMPARED, 'SETUP', 'CommonLibraries')
 DIR_COMPARED_WWW = os.path.join(DIR_COMPARED, 'WWW')
+DIR_COMPARED_WWW_BSI_SITES = os.path.join(DIR_COMPARED_WWW, 'BSI_SITES')
+DIR_COMPARED_WWW_RT_IC = os.path.join(DIR_COMPARED_WWW_BSI_SITES, 'RT_IC')
 DIR_COMPARED_RT_TPL = os.path.join(DIR_COMPARED, 'RT_TPL')
 DIR_COMPARED_RTF = os.path.join(DIR_COMPARED, 'RTF')
 DIR_COMPARED_RTF_BANK = os.path.join(DIR_COMPARED_RTF, 'Bank')
@@ -52,10 +55,10 @@ DIR_COMPARED_RTF_REPJET = os.path.join(DIR_COMPARED_RTF, 'RepJet')
 DIR_PATCH = os.path.join(DIR_TEMP, 'PATCH')
 
 
-def dir_after_base(instance): return os.path.join(os.path.join(DIR_AFTER, 'BASE'), instance)
+def dir_after_base(instance): return os.path.join(DIR_AFTER, 'BASE', instance)
 
 
-def dir_compared_base(instance): return os.path.join(os.path.join(DIR_COMPARED, 'BASE'), instance)
+def dir_compared_base(instance): return os.path.join(DIR_COMPARED, 'BASE', instance)
 
 
 def dir_patch(instance=''): return os.path.join(DIR_PATCH, instance)
@@ -255,14 +258,16 @@ def dir_patch_libfiles_template_languagex_ru(version): return os.path.join(
     dir_patch_libfiles_template_languagex(version), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_distrib(): return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
+def dir_patch_libfiles_template_distrib():
+    return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
 
 
-def dir_patch_libfiles_template_distrib_client(): return os.path.join(dir_patch_libfiles_template_distrib(), 'CLIENT')
+def dir_patch_libfiles_template_distrib_client():
+    return os.path.join(dir_patch_libfiles_template_distrib(), 'CLIENT')
 
 
-def dir_patch_libfiles_template_distrib_client_exe(): return os.path.join(dir_patch_libfiles_template_distrib_client(),
-                                                                          'EXE')
+def dir_patch_libfiles_template_distrib_client_exe():
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'EXE')
 
 
 def dir_patch_libfiles_template_distrib_client_system(): return os.path.join(
@@ -281,35 +286,43 @@ def dir_patch_libfiles_template_distrib_client_subsys_print_rtf(): return os.pat
     dir_patch_libfiles_template_distrib_client_subsys_print(), 'RTF')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print_repjet(): return os.path.join(
-    dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
+def dir_patch_libfiles_template_distrib_client_subsys_print_repjet():
+    return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
 
 
-def dir_patch_libfiles_template_distrib_client_user(): return os.path.join(dir_patch_libfiles_template_distrib_client(),
-                                                                           'USER')
+def dir_patch_libfiles_template_distrib_client_user():
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'USER')
 
 
-def dir_patch_libfiles_template_language(): return os.path.join(dir_patch_libfiles_template(), 'Language')
+def dir_patch_libfiles_template_language():
+    return os.path.join(dir_patch_libfiles_template(), 'Language')
 
 
-def dir_patch_libfiles_template_language_en(): return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
+def dir_patch_libfiles_template_language_en():
+    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
 
 
-def dir_patch_libfiles_template_language_ru(): return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
+def dir_patch_libfiles_template_language_ru():
+    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_language_en_client_system(): return os.path.join(dir_patch_libfiles_template_language(),
-                                                                                 'ENGLISH', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_en_client_system():
+    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH', 'CLIENT', 'SYSTEM')
 
 
-def dir_patch_libfiles_template_language_ru_client_system(): return os.path.join(dir_patch_libfiles_template_language(),
-                                                                                 'RUSSIAN', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_ru_client_system():
+    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN', 'CLIENT', 'SYSTEM')
 
 
 def get_filename_upgrade10_eif(instance): return os.path.join(dir_patch(instance), 'Upgrade(10).eif')
 
 
-def get_filename_jira_tickets(): return os.path.join(DIR_PATCH, 'jira_tickets.txt')
+def get_filename_jira_tickets():
+    return os.path.join(DIR_PATCH, 'jira_tickets.txt')
+
+
+def dir_patch_libfilesreact():
+    return os.path.join(dir_patch(INSTANCE_BANK), 'LIBFILES.REACT')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1881,6 +1894,21 @@ def copy_bll(settings):
 
 
 # -------------------------------------------------------------------------------------------------
+def copy_yaml():
+    source_dir = DIR_COMPARED_WWW_RT_IC
+    if os.path.exists(source_dir):
+        yaml_list = list_files_of_directory(source_dir, "*.yaml")
+        if len(yaml_list) > 0:
+            destination_dir = dir_patch_libfilesreact()
+            log('COPYING YAML files to {}'.format(destination_dir))
+            copy_files_from_dir(source_dir, destination_dir, '*.yaml')
+        else:
+            log('NOT COPYING YAML. No yaml files in {}'.format(source_dir))
+    else:
+        log('NOT COPYING YAML. Path {} not exists'.format(source_dir))
+
+
+# -------------------------------------------------------------------------------------------------
 def copy_www(settings):
     source_dir = DIR_COMPARED_WWW
     if os.path.exists(source_dir):
@@ -1924,6 +1952,17 @@ def copy_rt_tpl(settings):
             log('\tERROR when copying ({})'.format(exc))
     else:
         log('NOT COPYING RT_TPL. Path {} not exists'.format(source_dir))
+
+
+# -------------------------------------------------------------------------------------------------
+def copy_CommonLibraries():
+    source_dir = DIR_COMPARED_CommonLibraries
+    if os.path.exists(source_dir):
+        destination_dir = dir_patch_libfiles(INSTANCE_BANK)
+        log('COPYING CommonLibraries files to {}'.format(destination_dir))
+        copy_tree(source_dir, destination_dir)
+    else:
+        log('NOT COPYING CommonLibraries. Path {} not exists'.format(source_dir))
 
 
 # -------------------------------------------------------------------------------------------------
@@ -2069,9 +2108,11 @@ def patch():
         if not build_downloaded:
             build_version = get_build_version(global_settings)
             global_settings.Is20Version = is_20_version(build_version)
+        copy_yaml()
         copy_www(global_settings)
         copy_rt_tpl(global_settings)
         copy_rtf(global_settings)
+        copy_CommonLibraries()
         continue_compilation = continue_compilation and (build_downloaded or not need_download_build)
 
     # если ЭТАП ЗАГРУЗКИ завершился успешно,
