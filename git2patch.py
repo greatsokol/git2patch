@@ -1459,7 +1459,7 @@ def bls_get_uses_graph(path):
 
 
 # -------------------------------------------------------------------------------------------------
-def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic_server, lic_profile, version):
+def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic_server, lic_profile, version, failed_files):
     # log(BlsPath)
     # проверим, есть ли компилятор
     bscc_path = os.path.join(build_path, 'bscc.exe')
@@ -1479,8 +1479,9 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
     process.stdout.close()
     str_res = '\n\t\t\t' + out.decode('windows-1251').replace('\n', '\n\t\t\t')
     # !!! successfully с ошибкой. так и должно быть !!!
-    if 'Compiled succesfully' not in str_res and \
-            'Compiled with warnings' not in str_res:
+    if 'Compiled succesfully' not in str_res and 'Compiled with warnings' not in str_res:
+        if bls_file_name not in failed_files:
+            failed_files.append(bls_file_name)
         log('\tERROR: File "{}", Uses list "{}"{}'.format(bls_file_name, uses_list, str_res))
         log('\tCOMPILATION continues. Please wait...')
         return False
@@ -1492,7 +1493,7 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
 # -------------------------------------------------------------------------------------------------
 def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
                                        bls_uses_graph, bls_file_name, observed_list,
-                                       version, tabs):
+                                       version, tabs, failed_files):
     bls_file_name = bls_file_name.lower()
     if bls_file_name not in observed_list:  # если файл отсутствует в списке обработанных
         percents = int(100.00 * len(observed_list) / len(bls_uses_graph))
@@ -1509,9 +1510,10 @@ def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
                                                        bls_uses_graph,
                                                        UsesFileName,
                                                        observed_list,
-                                                       version, tabs + "\t")
+                                                       version, tabs + "\t", failed_files)
             if __bls_compile_one_file__(build_path, bls_file_name, bls_file_path,
-                                        uses_list, lic_server, lic_profile, version):
+                                        uses_list, lic_server, lic_profile, version,
+                                        failed_files):
                 observed_list.append(bls_file_name)  # добавляем в список учтенных файлов
         else:
             log(tabs + 'No information about file to compile "{}". Probably not all SOURCE were downloaded.'.format(
@@ -1525,12 +1527,15 @@ def bls_compile_all(lic_server, lic_profile, build_path, source_path, bll_versio
     copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'], [])  # копируем в каталог билда все bls
     bls_uses_graph = bls_get_uses_graph(build_path)  # строим граф зависимостей по строкам uses
     observed_list = []
+    failed_files = []
     try:
         for bls_file_name in bls_uses_graph:  # компилируем все bls
             __bls_compile_all_implementation__(lic_server, lic_profile, build_path, bls_uses_graph,
                                                bls_file_name, observed_list,
-                                               bll_version, "\t")
+                                               bll_version, "\t", failed_files)
         log("\tCOMPILED {} of {}".format(len(observed_list), len(bls_uses_graph)))
+        if len(failed_files):
+            log("\tFAILED FILES({}): {}".format(len(failed_files), failed_files))
         return True
     except FileNotFoundError as exc:
         log('\tERROR: {}'.format(exc))
