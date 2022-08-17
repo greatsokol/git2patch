@@ -1466,7 +1466,7 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
     if not os.path.exists(bscc_path):
         # компилятора нет, ошибка
         raise FileNotFoundError('Compiler {} not found'.format(bscc_path))
-    run_str = bscc_path + ' "{}" -M0 -O0 -S{} -A{}'.format(bls_path, lic_server, lic_profile)
+    run_str = bscc_path + ' "{}" -M0 -O0 -S{} -A{} -R1'.format(bls_path, lic_server, lic_profile)
     if version:
         run_str = run_str + ' -V"{}"'.format(version)
     # log(run_str)
