@@ -1182,6 +1182,11 @@ def make_upgrade10_eif_string_for_tables(file_name):
 
 # -------------------------------------------------------------------------------------------------
 def make_upgrade10_eif_string_by_file_name(counter, file_name):
+    if file_name.lower() == 'version(14).eif':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
+        result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
+             "#TODO проверьте настройку"
+        return '  ' + result.format(counter, '14', 'Version') + '\n'
+
     result = ''
     file_type_match = re.findall(r'\((?:\d+|data)\)\.eif', file_name, flags=re.IGNORECASE)
     if len(file_type_match):
@@ -1194,8 +1199,8 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
             result = make_upgrade10_eif_string_for_tables(file_name)
         elif structure_type == '12':
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Визуальные формы'>"
-        elif structure_type == '14':
-            result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
+        elif structure_type == '14':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
+            result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|FALSE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
                      "#TODO проверьте настройку"
         elif structure_type == '16':
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Автопроцедуры'>"
