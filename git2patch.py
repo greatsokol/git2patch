@@ -1201,7 +1201,7 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Визуальные формы'>"
         elif structure_type == '14':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|FALSE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
-                     "#TODO проверьте настройку"
+                     "#TODO проверьте настройку / существующие ветки не обновляются, смотри https://jira.bssys.com/browse/GPBDBOPE-18"
         elif structure_type == '16':
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Автопроцедуры'>"
         elif structure_type == '18':
