@@ -52,6 +52,7 @@ DIR_COMPARED_RTF = os.path.join(DIR_COMPARED, 'RTF')
 DIR_COMPARED_RTF_BANK = os.path.join(DIR_COMPARED_RTF, 'Bank')
 DIR_COMPARED_RTF_CLIENT = os.path.join(DIR_COMPARED_RTF, 'Client')
 DIR_COMPARED_RTF_REPJET = os.path.join(DIR_COMPARED_RTF, 'RepJet')
+DIR_COMPARED_XSD = os.path.join(DIR_COMPARED, 'XSD')
 DIR_PATCH = os.path.join(DIR_TEMP, 'PATCH')
 
 
@@ -211,6 +212,10 @@ def dir_patch_libfiles_subsys_template(): return os.path.join(dir_patch_libfiles
 
 def dir_patch_libfiles_subsys_print(instance, version=''): return os.path.join(
     dir_patch_libfiles_subsys(instance, version), 'PRINT')
+
+
+def dir_patch_libfiles_subsys_xsd(instance, version=''): return os.path.join(
+    dir_patch_libfiles_subsys(instance, version), 'XSD')
 
 
 def dir_patch_libfiles_subsys_print_rtf(instance, version=''): return os.path.join(
@@ -1919,6 +1924,17 @@ def copy_yaml():
 
 
 # -------------------------------------------------------------------------------------------------
+def copy_xsd():
+    source_dir = DIR_COMPARED_XSD
+    if os.path.exists(source_dir):
+        destination_dir = dir_patch_libfiles_subsys_xsd(INSTANCE_BANK)
+        log('COPYING XSD files to {}'.format(destination_dir))
+        copy_tree(source_dir, destination_dir)
+    else:
+        log('NOT COPYING XSD. Path {} not exists'.format(source_dir))
+
+
+# -------------------------------------------------------------------------------------------------
 def copy_www(settings):
     source_dir = DIR_COMPARED_WWW
     if os.path.exists(source_dir):
@@ -2078,27 +2094,34 @@ def patch():
     log('=' * 120)
     global_settings = GlobalSettings()
     if not global_settings.was_success():
-        log('FAILED')
+        log('SETTINGS FAILED')
         return
 
     continue_compilation = make_decision_compilation_or_restart()
     if not continue_compilation:
         if not clean(DIR_TEMP):
-            log('FAILED')
+            log('CLEAN FAILED')
             return
-        log('PATCH PREPARATION BEGIN')
-    else:
-        log('BLS COMPILATION BEGIN')
 
     # Если пользователь не выбрал продолжение компиляции, запустим
     # ЭТАП ЗАГРУЗКИ ПО МЕТКАМ И СРАВНЕНИЯ РЕВИЗИЙ:
     if not continue_compilation:
+        log('PATCH PREPARATION BEGIN')
         if not download_from_git(global_settings):
-            log('FAILED')
+            log('DOWNLOAD FAILED')
             return
+        get_git_log(global_settings)  # формирование списка тикетов
+
         if not compare_directories_before_and_after():
             log('EXIT')
             return
+
+        copy_yaml()
+        copy_xsd()
+        copy_www(global_settings)
+        copy_rt_tpl(global_settings)
+        copy_rtf(global_settings)
+        copy_CommonLibraries()
 
         for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
             copy_table_10_files_for_data_files(instance)
@@ -2118,11 +2141,6 @@ def patch():
         if not build_downloaded:
             build_version = get_build_version(global_settings)
             global_settings.Is20Version = is_20_version(build_version)
-        copy_yaml()
-        copy_www(global_settings)
-        copy_rt_tpl(global_settings)
-        copy_rtf(global_settings)
-        copy_CommonLibraries()
         continue_compilation = continue_compilation and (build_downloaded or not need_download_build)
 
     # если ЭТАП ЗАГРУЗКИ завершился успешно,
@@ -2135,10 +2153,7 @@ def patch():
                            global_settings.BLLVersion):
             # копируем готовые BLL в патч
             copy_bll(global_settings)
-
-    get_git_log(global_settings)
     log('DONE')
-
 
 def compile_only():
     # пока не реализовано ----------------------------------------------
