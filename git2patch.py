@@ -2035,7 +2035,7 @@ def copy_rtf(settings):
                         destination_dirs.append(
                             dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet())
             for destination_dir in destination_dirs:
-                log('COPYING {} files to {}'.format(what, destination_dir))
+                log('COPYING {} files from {} to {}'.format(what, source_dir, destination_dir))
                 copy_files_from_dir(source_dir, destination_dir)
         else:
             log('NOT COPYING RTF from {}. Path not exists'.format(source_dir))
@@ -2118,7 +2118,6 @@ def patch():
 
         copy_yaml()
         copy_xsd()
-        copy_www(global_settings)
         copy_rt_tpl(global_settings)
         copy_rtf(global_settings)
         copy_CommonLibraries()
@@ -2135,6 +2134,7 @@ def patch():
             #  если требуется загрузка билда и предыдущая загрузка основного билда успешна
             if build_downloaded:
                 copy_mba_dll()
+
         # Если билд не скачивался (при этом мы определяемся с версией билда),
         # то все равно попробуем получить его версию, чтобы определиться с каталогами
         # для выкладывания ИК
@@ -2142,6 +2142,9 @@ def patch():
             build_version = get_build_version(global_settings)
             global_settings.Is20Version = is_20_version(build_version)
         continue_compilation = continue_compilation and (build_downloaded or not need_download_build)
+
+        # после определения версии билда, потому что надо знать версию билда, чтобы выкладывать WWW
+        copy_www(global_settings)
 
     # если ЭТАП ЗАГРУЗКИ завершился успешно,
     # или пользователь выбрал переход к компиляции
