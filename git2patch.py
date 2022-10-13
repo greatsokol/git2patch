@@ -23,7 +23,7 @@ except ModuleNotFoundError as e:
 # -------------------------------------------------------------------------------------------------
 python_version = sys.version.split(' ', 1)[0]
 if python_version < '3.10':
-    print('Error: Version of python interpreter should start from 3.10 ({})'.format(python_version))
+    print(f'Error: Version of python interpreter should start from 3.10 ({python_version})')
     quit(-1)
 
 EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=100, thread_name_prefix='thread')
@@ -68,10 +68,10 @@ def dir_patch(instance=''): return os.path.join(DIR_PATCH, instance)
 def dir_patch_data(instance): return os.path.join(dir_patch(instance), 'DATA')
 
 
-def dir_patch_cbstart(instance, version=''): return os.path.join(dir_patch(instance), 'CBSTART{}'.format(version))
+def dir_patch_cbstart(instance, version=''): return os.path.join(dir_patch(instance), f'CBSTART{version}')
 
 
-def dir_patch_libfiles(instance, version=''): return os.path.join(dir_patch(instance), 'LIBFILES{}'.format(version))
+def dir_patch_libfiles(instance, version=''): return os.path.join(dir_patch(instance), f'LIBFILES{version}')
 
 
 def dir_patch_libfiles_user(instance): return os.path.join(dir_patch_libfiles(instance), 'USER')
@@ -80,7 +80,7 @@ def dir_patch_libfiles_user(instance): return os.path.join(dir_patch_libfiles(in
 def dir_patch_libfiles_source(): return os.path.join(dir_patch_libfiles(INSTANCE_BANK), 'SOURCE')
 
 
-def dir_patch_libfiles_bnk(version=''): return os.path.join(dir_patch(INSTANCE_BANK), 'LIBFILES{}.BNK'.format(version))
+def dir_patch_libfiles_bnk(version=''): return os.path.join(dir_patch(INSTANCE_BANK), f'LIBFILES{version}.BNK')
 
 
 def dir_patch_libfiles_bnk_add(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'add')
@@ -89,8 +89,7 @@ def dir_patch_libfiles_bnk_add(version=''): return os.path.join(dir_patch_libfil
 def dir_patch_libfiles_bnk_bsiset_exe(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'bsiset', 'EXE')
 
 
-def dir_patch_libfiles_bnk_license_exe(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'license',
-                                                                        'EXE')
+def dir_patch_libfiles_bnk_license_exe(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'license', 'EXE')
 
 
 def dir_patch_libfiles_bnk_rts(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'rts')
@@ -152,40 +151,31 @@ def dir_patch_libfiles_bnk_www(version=''): return os.path.join(dir_patch_libfil
 def dir_patch_libfiles_bnk_www_exe(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version), 'EXE')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version),
-                                                                           'BSI_scripts')
+def dir_patch_libfiles_bnk_www_bsiscripts(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version),'BSI_scripts')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtic(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_ic')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtic(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_ic')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_Admin')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_Admin')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtwa(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_wa')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtwa(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_wa')
 
 
-def dir_patch_libfiles_bnk_www_bsisites(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version),
-                                                                         'BSI_sites')
+def dir_patch_libfiles_bnk_www_bsisites(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version), 'BSI_sites')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtic(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites(version), 'rt_ic')
+def dir_patch_libfiles_bnk_www_bsisites_rtic(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_ic')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtwa(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites(version), 'rt_wa')
+def dir_patch_libfiles_bnk_www_bsisites_rtwa(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_wa')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtic_code(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites_rtic(version), 'CODE')
+def dir_patch_libfiles_bnk_www_bsisites_rtic_code(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtic(version), 'CODE')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites_rtwa(version), 'CODE')
+def dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtwa(version), 'CODE')
 
 
 def dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(build_version, version=''): return os.path.join(
@@ -199,31 +189,25 @@ def dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_version, ve
 def dir_patch_libfiles_exe(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'EXE')
 
 
-def dir_patch_libfiles_system(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version),
-                                                                         'SYSTEM')
+def dir_patch_libfiles_system(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'SYSTEM')
 
 
-def dir_patch_libfiles_subsys(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version),
-                                                                         'SUBSYS')
+def dir_patch_libfiles_subsys(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'SUBSYS')
 
 
 def dir_patch_libfiles_subsys_template(): return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK, ''), 'TEMPLATE')
 
 
-def dir_patch_libfiles_subsys_print(instance, version=''): return os.path.join(
-    dir_patch_libfiles_subsys(instance, version), 'PRINT')
+def dir_patch_libfiles_subsys_print(instance, version=''): return os.path.join(dir_patch_libfiles_subsys(instance, version), 'PRINT')
 
 
-def dir_patch_libfiles_subsys_xsd(instance, version=''): return os.path.join(
-    dir_patch_libfiles_subsys(instance, version), 'XSD')
+def dir_patch_libfiles_subsys_xsd(instance, version=''): return os.path.join(dir_patch_libfiles_subsys(instance, version), 'XSD')
 
 
-def dir_patch_libfiles_subsys_print_rtf(instance, version=''): return os.path.join(
-    dir_patch_libfiles_subsys_print(instance, version), 'RTF')
+def dir_patch_libfiles_subsys_print_rtf(instance, version=''): return os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RTF')
 
 
-def dir_patch_libfiles_subsys_print_repjet(instance, version=''): os.path.join(
-    dir_patch_libfiles_subsys_print(instance, version), 'RepJet')
+def dir_patch_libfiles_subsys_print_repjet(instance, version=''): os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RepJet')
 
 
 def dir_patch_libfiles_instclnt(): return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK), 'INSTCLNT')
@@ -235,88 +219,68 @@ def dir_patch_libfiles_inettemp(): return os.path.join(dir_patch_libfiles_instcl
 def dir_patch_libfiles_template(): return os.path.join(dir_patch_libfiles_instclnt(), 'TEMPLATE')
 
 
-def dir_patch_libfiles_template_distribx(version): return os.path.join(dir_patch_libfiles_template(),
-                                                                       'DISTRIB.X{}'.format(version))
+def dir_patch_libfiles_template_distribx(version): return os.path.join(dir_patch_libfiles_template(), f'DISTRIB.X{version}')
 
 
-def dir_patch_libfiles_template_distribx_client(version): return os.path.join(
-    dir_patch_libfiles_template_distribx(version), 'CLIENT')
+def dir_patch_libfiles_template_distribx_client(version): return os.path.join(dir_patch_libfiles_template_distribx(version), 'CLIENT')
 
 
-def dir_patch_libfiles_template_distribx_client_exe(version): return os.path.join(
-    dir_patch_libfiles_template_distribx_client(version), 'EXE')
+def dir_patch_libfiles_template_distribx_client_exe(version): return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'EXE')
 
 
-def dir_patch_libfiles_template_distribx_client_system(version): return os.path.join(
-    dir_patch_libfiles_template_distribx_client(version), 'SYSTEM')
+def dir_patch_libfiles_template_distribx_client_system(version): return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'SYSTEM')
 
 
-def dir_patch_libfiles_template_languagex(version): return os.path.join(dir_patch_libfiles_template(),
-                                                                        'Language.X{}'.format(version))
+def dir_patch_libfiles_template_languagex(version): return os.path.join(dir_patch_libfiles_template(), f'Language.X{version}')
 
 
-def dir_patch_libfiles_template_languagex_en(version): return os.path.join(
-    dir_patch_libfiles_template_languagex(version), 'ENGLISH')
+def dir_patch_libfiles_template_languagex_en(version): return os.path.join(dir_patch_libfiles_template_languagex(version), 'ENGLISH')
 
 
-def dir_patch_libfiles_template_languagex_ru(version): return os.path.join(
-    dir_patch_libfiles_template_languagex(version), 'RUSSIAN')
+def dir_patch_libfiles_template_languagex_ru(version): return os.path.join(dir_patch_libfiles_template_languagex(version), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_distrib():
-    return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
+def dir_patch_libfiles_template_distrib(): return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
 
 
 def dir_patch_libfiles_template_distrib_client():
     return os.path.join(dir_patch_libfiles_template_distrib(), 'CLIENT')
 
 
-def dir_patch_libfiles_template_distrib_client_exe():
-    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'EXE')
+def dir_patch_libfiles_template_distrib_client_exe():  return os.path.join(dir_patch_libfiles_template_distrib_client(), 'EXE')
 
 
-def dir_patch_libfiles_template_distrib_client_system(): return os.path.join(
-    dir_patch_libfiles_template_distrib_client(), 'SYSTEM')
+def dir_patch_libfiles_template_distrib_client_system(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SYSTEM')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys(): return os.path.join(
-    dir_patch_libfiles_template_distrib_client(), 'SUBSYS')
+def dir_patch_libfiles_template_distrib_client_subsys(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SUBSYS')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print(): return os.path.join(
-    dir_patch_libfiles_template_distrib_client_subsys(), 'PRINT')
+def dir_patch_libfiles_template_distrib_client_subsys_print(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys(), 'PRINT')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print_rtf(): return os.path.join(
-    dir_patch_libfiles_template_distrib_client_subsys_print(), 'RTF')
+def dir_patch_libfiles_template_distrib_client_subsys_print_rtf(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RTF')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print_repjet():
-    return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
+def dir_patch_libfiles_template_distrib_client_subsys_print_repjet(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
 
 
-def dir_patch_libfiles_template_distrib_client_user():
-    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'USER')
+def dir_patch_libfiles_template_distrib_client_user(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'USER')
 
 
-def dir_patch_libfiles_template_language():
-    return os.path.join(dir_patch_libfiles_template(), 'Language')
+def dir_patch_libfiles_template_language(): return os.path.join(dir_patch_libfiles_template(), 'Language')
 
 
-def dir_patch_libfiles_template_language_en():
-    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
+def dir_patch_libfiles_template_language_en(): return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
 
 
-def dir_patch_libfiles_template_language_ru():
-    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
+def dir_patch_libfiles_template_language_ru(): return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_language_en_client_system():
-    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_en_client_system(): return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH', 'CLIENT', 'SYSTEM')
 
 
-def dir_patch_libfiles_template_language_ru_client_system():
-    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_ru_client_system(): return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN', 'CLIENT', 'SYSTEM')
 
 
 def get_filename_upgrade10_eif(instance): return os.path.join(dir_patch(instance), 'Upgrade(10).eif')
@@ -340,10 +304,7 @@ def log(message_text):
     try:
         log_file_name = os.path.join(os.path.abspath(''), filename('log'))
         with open(log_file_name, mode='a') as f:
-            message_text = '[{}][{}_{}] {}'.format(current_time_as_string(),
-                                                   threading.get_ident(),
-                                                   threading.current_thread().name,
-                                                   str(message_text))
+            message_text = f'[{current_time_as_string()}][{threading.get_ident()}_{threading.current_thread().name}] {str(message_text)}'
             print(message_text)
             f.writelines('\n' + message_text)
     finally:
@@ -377,7 +338,7 @@ UPGRADE10_HEADER = \
     "[SECTION]\n" \
     "Name = MAKEUPGRADE (10)\n" \
     "Type = DSPStructure\n" \
-    "Version = {}\n" \
+    "Version = 100\n" \
     "ObjectType = 10\n" \
     "ObjectName = MAKEUPGRADE\n" \
     "TableName = MakeUpgrade\n" \
@@ -462,7 +423,7 @@ UPGRADE10_HEADER = \
     "[SECTION]\n" \
     "Name =  - Table data\n" \
     "Type = TableData\n" \
-    "Version = {}\n" \
+    "Version = 100\n" \
     "TableName = MAKEUPGRADE\n" \
     "[DATA]\n" \
     " [FIELDS]\n" \
@@ -481,7 +442,7 @@ UPGRADE10_HEADER = \
     "  ParentFor\n" \
     "  OperationResult\n" \
     "  Description\n" \
-    "[RECORDS]\n".format("100", "100")
+    "[RECORDS]\n"
 
 UPGRADE10_FOOTER = "[END]\n"
 EXCLUDED_BUILD_FOR_BANK = ['autoupgr.exe', 'operedit.exe',
@@ -693,7 +654,7 @@ const_excluded_build_for_CLIENT = EXCLUDED_BUILD_FOR_BANK + ['bsrdrct.exe',
 
 # -------------------------------------------------------------------------------------------------
 def filename(ext):
-    return '{}.{}'.format(os.path.splitext(__file__)[0], ext)
+    return f'{os.path.splitext(__file__)[0]}.{ext}'
 
 
 # -------------------------------------------------------------------------------------------------
@@ -727,15 +688,15 @@ class GlobalSettings:
         section_build = 'BUILD'
         try:
             if not os.path.exists(ini_filename):
-                raise FileNotFoundError('NOT FOUND ' + ini_filename)
+                raise FileNotFoundError(f'NOT FOUND {ini_filename}')
             parser = configparser.RawConfigParser()
             res = parser.read(ini_filename, encoding="UTF-8")
             if res.count == 0:  # если файл настроек не найден
-                raise FileNotFoundError('NOT FOUND {}'.format(ini_filename))
+                raise FileNotFoundError(f'NOT FOUND {ini_filename}')
 
             self.git_url = parser.get(section_special, 'Git').strip()
             if not self.git_url:
-                raise ValueError('NO Git defined in {}'.format(ini_filename))
+                raise ValueError(f'NO Git defined in {ini_filename}')
 
             self.LicenseServer = parser.get(section_special, 'LicenseServer').strip()
             self.LicenseProfile = parser.get(section_special, 'LicenseProfile').strip()
@@ -757,34 +718,29 @@ class GlobalSettings:
 
             # проверка путей к билду
             if self.BuildBK and not os.path.exists(self.BuildBK):
-                raise FileNotFoundError('NOT FOUND "{}"'.format(self.BuildBK))
+                raise FileNotFoundError(f'NOT FOUND "{self.BuildBK}"')
             if self.BuildIC and not os.path.exists(self.BuildIC):
-                raise FileNotFoundError('NOT FOUND "{}"'.format(self.BuildIC))
+                raise FileNotFoundError(f'NOT FOUND "{self.BuildIC}"')
 
         except BaseException as exc:
-            log('ERROR when reading settings from file "{}":\n\t\t{}'.format(ini_filename, exc))
+            log(f'ERROR when reading settings from file "{ini_filename}":\n\t\t{exc}')
 
         else:
             self.__success = True
             log('SETTINGS LOADED:\n\t'
-                'Git = {}\n\t'
-                'TagBefore = {}\n\t'
-                'TagAfter = {}\n\t'
-                'Licence server = {}\n\t'
-                'Licence profile = {}\n\t'
-                'Build RTS.ZIP = {}\n\t'
-                'Place BLL/DLL in EXE folder of Client patch = {}\n\t'
-                'Place build files in patch = {}\n\t'
-                'Place IC build files in patch = {}\n\t'
-                'Path to additional build files = {}\n\t'
-                'Path to build files = {}\n\t'
-                'Path to IC build files = {}\n\t'
-                'BLL version = {}'.
-                format(self.git_url, self.TagBefore, self.TagAfter, self.LicenseServer,
-                       self.LicenseProfile, self.BuildRTSZIP, self.ClientEverythingInEXE,
-                       self.PlaceBuildIntoPatchBK, self.PlaceBuildIntoPatchIC,
-                       self.BuildAdditionalFolders, self.BuildBK, self.BuildIC,
-                       self.BLLVersion))
+                f'Git = {self.git_url}\n\t'
+                f'TagBefore = {self.TagBefore}\n\t'
+                f'TagAfter = {self.TagAfter}\n\t'
+                f'Licence server = {self.LicenseServer}\n\t'
+                f'Licence profile = {self.LicenseProfile}\n\t'
+                f'Build RTS.ZIP = {self.BuildRTSZIP}\n\t'
+                f'Place BLL/DLL in EXE folder of Client patch = {self.ClientEverythingInEXE}\n\t'
+                f'Place build files in patch = {self.PlaceBuildIntoPatchBK}\n\t'
+                f'Place IC build files in patch = {self.PlaceBuildIntoPatchIC}\n\t'
+                f'Path to additional build files = {self.BuildAdditionalFolders}\n\t'
+                f'Path to build files = {self.BuildBK}\n\t'
+                f'Path to IC build files = {self.BuildIC}\n\t'
+                f'BLL version = {self.BLLVersion}')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -822,7 +778,7 @@ def make_dirs(path):
         if not os.path.exists(path):
             os.makedirs(path)
     except BaseException as exc:
-        log('\tERROR: can''t create directory "{}" ({})'.format(path, exc))
+        log(f'\tERROR: can''t create directory "{path}" ({exc})')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -894,7 +850,7 @@ def copy_files_ex(src_dir, destination_dir, function_to_list_files, wildcards=No
                 try:
                     shutil.copy2(filename_with_path, destination_dir)
                 except BaseException as exc:
-                    log('\tERROR: can\'t copy file "{}" to "{}" ({})'.format(filename_with_path, destination_dir, exc))
+                    log(f'\tERROR: can\'t copy file "{filename_with_path}" to "{destination_dir}" ({exc})')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -923,7 +879,7 @@ def copy_files_of_version(src_dir, destination_dir, exe_version, wildcards=None,
                     if get_binary_platform(filename_with_path) == exe_version:
                         shutil.copy2(filename_with_path, destination_dir)
                 except BaseException as exc:
-                    log('\tERROR: can\'t copy file "{}" to "{}" ({})'.format(filename_with_path, destination_dir, exc))
+                    log(f'\tERROR: can\'t copy file "{filename_with_path}" to "{destination_dir}" ({exc})')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -959,13 +915,13 @@ def clean(path, masks=None):
     if os.path.exists(path):
         try:
             if masks:
-                log('CLEANING {} for {} files'.format(path, masks))
+                log(f'CLEANING {path} for {masks} files')
                 for mask in masks:
                     # чистим все файлы по маске mask
                     [os.remove(os.path.join(d, file_name)) for d, _, files in os.walk(path) for file_name in
                      fnmatch.filter(files, mask)]
             else:
-                log('CLEANING {}'.format(path))
+                log(f'CLEANING {path}')
                 # Сначала чистим все файлы,
                 [os.remove(os.path.join(d, file_name)) for d, _, files in os.walk(path) for file_name in files]
                 # потом чистим все
@@ -973,7 +929,7 @@ def clean(path, masks=None):
         except FileNotFoundError:
             pass  # если папка отсутствует, то продолжаем молча
         except BaseException as exc:
-            log('\tERROR when cleaning ({})'.format(exc))
+            log(f'\tERROR when cleaning ({exc})')
             return False
     return True
 
@@ -986,7 +942,7 @@ def download_repo_from_git(git_url, repo_path, tag):
     if exists:
         origin.fetch()
         if tag not in git_repo.tags:
-            log('Not found tag "{}" in remote tags: {}'.format(tag, git_repo.tags))
+            log(f'Not found tag "{tag}" in remote tags: {git_repo.tags}')
             return False
         git = git_repo.git
         git.checkout(git_repo.tags[tag])
@@ -997,12 +953,14 @@ def download_repo_from_git(git_url, repo_path, tag):
 
 # -------------------------------------------------------------------------------------------------
 def download_git_thread(git_tag_info):
-    log('Downloading from remote {}'.format(git_tag_info))
+    log(f'Downloading from remote {git_tag_info}')
     if download_repo_from_git(git_tag_info['git_url'], git_tag_info['local_path'], git_tag_info['git_tag']):
-        log('Successfully downloaded tag "{}"'.format(git_tag_info['git_tag']))
+        git_tag = git_tag_info['git_tag']
+        log(f'Successfully downloaded tag "{git_tag}"')
         return True
     else:
-        log('Error when tried to download tag "{}"'.format(git_tag_info['git_tag']))
+        git_tag = git_tag_info['git_tag']
+        log(f'Error when tried to download tag "{git_tag}"')
         return False
 
 
@@ -1021,9 +979,9 @@ def download_from_git(settings):
             result = future.result()
             total_result = total_result and result
         except Exception as exc:
-            log('Thread generated an exception: {}'.format(exc))
+            log(f'Thread generated an exception: {exc}')
             total_result = False
-    log('GIT DOWNLOAD FINISHED with result {}'.format(total_result))
+    log(f'GIT DOWNLOAD FINISHED with result {total_result}')
     return total_result
 
 
@@ -1040,11 +998,11 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
         for file in dircmp.diff_files:
             path = os.path.join(after, file)
             if os.path.isfile(path):
-                log('\tcopying {}'.format(path))
+                log(f'\tcopying {path}')
                 make_dirs(where_to_copy)
                 shutil.copy2(path, where_to_copy)
             else:
-                log('\tsomething wrong {} -> {}'.format(path, where_to_copy))
+                log(f'\tsomething wrong {path} -> {where_to_copy}')
 
     if len(dircmp.same_files):
         match, mismatch, errors = filecmp.cmpfiles(before, after, dircmp.same_files, shallow=False)
@@ -1052,21 +1010,21 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
             for file in mismatch:
                 path = os.path.join(after, file)
                 if os.path.isfile(path):
-                    log('\tcopying after deep comparition {}'.format(path))
+                    log(f'\tcopying after deep comparition {path}')
                     make_dirs(where_to_copy)
                     shutil.copy2(path, where_to_copy)
                 else:
-                    log('\tsomething wrong {} -> {}'.format(path, where_to_copy))
+                    log(f'\tsomething wrong {path} -> {where_to_copy}')
 
     if dircmp.right_only:
         for file in dircmp.right_only:
             path = os.path.join(after, file)
             if os.path.isfile(path):
-                log('\tcopying {}'.format(path))
+                log(f'\tcopying {path}')
                 make_dirs(where_to_copy)
                 shutil.copy2(path, where_to_copy)
             else:
-                log('\tcopying DIR with contents {}'.format(path))
+                log(f'\tcopying DIR with contents {path}')
                 clean(os.path.join(where_to_copy, file))
                 copy_tree(path, os.path.join(where_to_copy, file))
 
@@ -1075,16 +1033,16 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
 def compare_directories_before_and_after():
     if os.path.exists(DIR_BEFORE):
         log('BEGIN compare directories:')
-        log('\tBEFORE: {}'.format(DIR_BEFORE))
-        log('\tAFTER:  {}'.format(DIR_AFTER))
+        log(f'\tBEFORE: {DIR_BEFORE}')
+        log(f'\tAFTER:  {DIR_AFTER}')
         __compare_and_copy_dirs_recursively__(DIR_BEFORE, DIR_AFTER, DIR_COMPARED)
     else:
         os.rename(DIR_AFTER, DIR_COMPARED)
         log('\tUSING folder "AFTER" as compare result, because "BEFORE" not exists:')
-        log('\tBEFORE (not exists): {}'.format(DIR_BEFORE))
-        log('\tAFTER              : {}'.format(DIR_AFTER))
+        log(f'\tBEFORE (not exists): {DIR_BEFORE}')
+        log(f'\tAFTER              : {DIR_AFTER}')
     if os.path.exists(DIR_COMPARED):
-        log('\tFINISHED compare directories. LOOK at {}'.format(DIR_COMPARED))
+        log(f'\tFINISHED compare directories. LOOK at {DIR_COMPARED}')
         return True
     else:
         log('\tFINISHED compare directories. NO CHANGES!!!')
@@ -1188,9 +1146,7 @@ def make_upgrade10_eif_string_for_tables(file_name):
 # -------------------------------------------------------------------------------------------------
 def make_upgrade10_eif_string_by_file_name(counter, file_name):
     if file_name.lower() == 'version(14).eif':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
-        result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
-             "#TODO проверьте настройку"
-        return '  ' + result.format(counter, '14', 'Version') + '\n'
+        return f"  <{counter}|14|'Version'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> #TODO проверьте настройку\n"
 
     result = ''
     file_type_match = re.findall(r'\((?:\d+|data)\)\.eif', file_name, flags=re.IGNORECASE)
@@ -1242,11 +1198,11 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
         elif structure_type == '84':
             result = "<{}|{}|'{}'|TRUE|FALSE|FALSE|TRUE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Статусы'>"
         else:
-            log('\tERROR unknown structure type {} for filename {}'.format(structure_type, file_name))
+            log(f'\tERROR unknown structure type {structure_type} for filename {file_name}')
 
         return '  ' + result.format(counter, structure_type, file_name) + '\n'
     else:
-        log('\tERROR can not detect structure type by filename ({})'.format(file_name))
+        log(f'\tERROR can not detect structure type by filename ({file_name})')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1264,7 +1220,7 @@ def copy_table_10_files_for_data_files(instance):
             if not exists:
                 source_dir = os.path.join(dir_after_base(instance), 'TABLES')
                 dest_dir = os.path.join(dir_compared_base(instance), 'TABLES')
-                log('COPYING {} from {} to {}'.format(eif10_file, source_dir, dest_dir))
+                log(f'COPYING {eif10_file} from {source_dir} to {dest_dir}')
                 copy_files_from_dir(source_dir, dest_dir, [eif10_file])
 
 
@@ -1278,7 +1234,7 @@ def generate_upgrade10_eif(instance):
             try:
                 shutil.copy2(eif_file, data_dir)
             except EnvironmentError as exc:
-                log('\tUnable to copy file. %s' % exc)
+                log(f'\tUnable to copy file. {exc}')
 
         eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
         if len(eif_list) > 0:
@@ -1399,7 +1355,7 @@ def extract_build_version(build_path):
                     break
 
     except BaseException as exc:
-        log('\tERROR: can not detect version of build ({})'.format(exc))
+        log(f'\tERROR: can not detect version of build ({exc})')
         raise e
     return result
 
@@ -1475,10 +1431,10 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
     bscc_path = os.path.join(build_path, 'bscc.exe')
     if not os.path.exists(bscc_path):
         # компилятора нет, ошибка
-        raise FileNotFoundError('Compiler {} not found'.format(bscc_path))
-    run_str = bscc_path + ' "{}" -M0 -O0 -S{} -A{} -R1'.format(bls_path, lic_server, lic_profile)
+        raise FileNotFoundError(f'Compiler {bscc_path} not found')
+    run_str = bscc_path + f' "{bls_path}" -M0 -O0 -S{lic_server} -A{lic_profile} -R1'
     if version:
-        run_str = run_str + ' -V"{}"'.format(version)
+        run_str = run_str + f' -V"{version}"'
     # log(run_str)
     '''
     subprocess.call(run_str)
@@ -1492,7 +1448,7 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
     if 'Compiled succesfully' not in str_res and 'Compiled with warnings' not in str_res:
         if bls_file_name not in failed_files:
             failed_files.append(bls_file_name)
-        log('\tERROR: File "{}", Uses list "{}"{}'.format(bls_file_name, uses_list, str_res))
+        log(f'\tERROR: File "{bls_file_name}", Uses list "{uses_list}"{str_res}')
         log('\tCOMPILATION continues. Please wait...')
         return False
     else:
@@ -1507,7 +1463,7 @@ def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
     bls_file_name = bls_file_name.lower()
     if bls_file_name not in observed_list:  # если файл отсутствует в списке обработанных
         percents = int(100.00 * len(observed_list) / len(bls_uses_graph))
-        log("{:>3}%".format(percents) + tabs + "{}".format(bls_file_name))
+        log("{:>3}%".format(percents) + tabs + bls_file_name)
         bls_item_info = bls_uses_graph.get(bls_file_name)
         if bls_item_info:
             bls_file_path = bls_item_info[0]
@@ -1526,8 +1482,7 @@ def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
                                         failed_files):
                 observed_list.append(bls_file_name)  # добавляем в список учтенных файлов
         else:
-            log(tabs + 'No information about file to compile "{}". Probably not all SOURCE were downloaded.'.format(
-                bls_file_name))
+            log(tabs + f'No information about file to compile "{bls_file_name}". Probably not all SOURCE were downloaded.')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1543,12 +1498,12 @@ def bls_compile_all(lic_server, lic_profile, build_path, source_path, bll_versio
             __bls_compile_all_implementation__(lic_server, lic_profile, build_path, bls_uses_graph,
                                                bls_file_name, observed_list,
                                                bll_version, "\t", failed_files)
-        log("\tCOMPILED {} of {}".format(len(observed_list), len(bls_uses_graph)))
+        log(f"\tCOMPILED {len(observed_list)} of {len(bls_uses_graph)}")
         if len(failed_files):
-            log("\tFAILED FILES({}): {}".format(len(failed_files), failed_files))
+            log(f"\tFAILED FILES({len(failed_files)}): {failed_files}")
         return True
     except FileNotFoundError as exc:
-        log('\tERROR: {}'.format(exc))
+        log(f'\tERROR: {exc}')
         return False
 
 
@@ -1558,7 +1513,7 @@ def __extract_build__(build_path):
     if '.zip' in build_zip_file.lower():
         build_tmp_dir = os.path.join(tempfile.gettempdir(), build_zip_file)
         clean(build_tmp_dir)
-        log('EXTRACTING BUILD "{}" in "{}"'.format(build_path, build_tmp_dir))
+        log(f'EXTRACTING BUILD "{build_path}" in "{build_tmp_dir}"')
         try:
             with zipfile.ZipFile(build_path) as z:
                 z.extractall(os.path.join(tempfile.gettempdir(), build_zip_file))
@@ -1566,7 +1521,7 @@ def __extract_build__(build_path):
                 # нового пути к билду для последующего применения
                 build_path = build_tmp_dir
         except BaseException as exc:
-            log('\tERROR EXTRACTING BUILD "{}"'.format(exc))
+            log(f'\tERROR EXTRACTING BUILD "{exc}"')
         # конец разархивации
     return build_path
 
@@ -1582,7 +1537,7 @@ def __copy_build_ex__(build_path, build_path_crypto, destination_path, only_get_
     if not build_path:
         return
     if not os.path.exists(build_path):
-        log('\tPATH {} does not exists'.format(build_path))
+        log(f'\tPATH {build_path} does not exists')
         return
     # если ссылка на билд указывает не на каталог, а на файл архива
     # попробуем провести разархивацию во временный каталог
@@ -1594,24 +1549,23 @@ def __copy_build_ex__(build_path, build_path_crypto, destination_path, only_get_
     if not only_get_version:
         if is_20_version(version):
             for release in ['32', '64']:
-                win_rel = 'Win{}\\Release'.format(release)
+                win_rel = f'Win{release}\\Release'
                 src = os.path.join(build_path, win_rel)
                 dst = os.path.join(destination_path, win_rel)
                 clean(dst)
-                log('COPYING BUILD {} from "{}" to "{}"'.format(version, src, dst))
+                log(f'COPYING BUILD {version} from "{src}" to "{dst}"')
                 copy_files_from_all_subdirectories(src, dst, ['*.exe', '*.ex', '*.bpl', '*.dll'], [])
                 if build_path_crypto:
                     src = os.path.join(build_path_crypto, win_rel)
-                    log('COPYING CRYPTO BUILD {} from "{}" to "{}"'.format(version, src, dst))
+                    log(f'COPYING CRYPTO BUILD {version} from "{src}" to "{dst}"')
                     copy_files_from_all_subdirectories(src, dst, ['CryptLib.dll', 'cr_*.dll'], [])
         else:
             clean(destination_path)
-            log('COPYING BUILD {} from "{}" to "{}"'.format(version, build_path, destination_path))
+            log(f'COPYING BUILD {version} from "{build_path}" to "{destination_path}"')
             copy_files_from_all_subdirectories(build_path, destination_path, ['*.exe', '*.ex', '*.bpl', '*.dll'], [])
             if build_path_crypto:
-                log('COPYING CRYPTO BUILD {} from "{}" to "{}"'.format(version, build_path, destination_path))
-                copy_files_from_all_subdirectories(build_path_crypto, destination_path, ['CryptLib.dll', 'cr_*.dll'],
-                                                   [])
+                log(f'COPYING CRYPTO BUILD {version} from "{build_path}" to "{destination_path}"')
+                copy_files_from_all_subdirectories(build_path_crypto, destination_path, ['CryptLib.dll', 'cr_*.dll'], [])
     return version
 
 
@@ -1624,7 +1578,7 @@ def __copy_build__(build_path, build_path_crypto, destination_path):
 def get_build_version(settings):
     log('Detecting BUILD VERSION')
     version = __copy_build_ex__(settings.BuildBK, None, None, True)
-    log('\tBUILD VERSION is {}'.format(version))
+    log(f'\tBUILD VERSION is {version}')
     return version
 
 
@@ -1657,7 +1611,7 @@ def download_build(settings):
                 copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'], [])
             if instance == INSTANCE_BANK:
                 for filepath in settings.BuildAdditionalFolders:
-                    log('COPYING ADDITIONAL from "{}" to "{}"'.format(filepath, DIR_BUILD_BK))
+                    log(f'COPYING ADDITIONAL from "{filepath}" to "{DIR_BUILD_BK}"')
                     copy_files_from_all_subdirectories(filepath, DIR_BUILD_BK, ['*.*'], [])
         else:
             is20 = is_20_version(build_ic_version)
@@ -1665,7 +1619,7 @@ def download_build(settings):
 
         #  Если в настройках включено копирование билда в патч
         if settings.PlaceBuildIntoPatchBK or settings.PlaceBuildIntoPatchIC:
-            log('COPYING build into patch for {}'.format(instance))
+            log(f'COPYING build into patch for {instance}')
             excluded_files = ''
             if instance == INSTANCE_BANK:
                 excluded_files = EXCLUDED_BUILD_FOR_BANK
@@ -1680,41 +1634,14 @@ def download_build(settings):
 
             if is20:  # для билда 20-ой версии
                 if instance == INSTANCE_IC and settings.PlaceBuildIntoPatchIC:  # выкладываем билд плагина для ИК
-                    build_path_bank = os.path.join(DIR_BUILD_BK,
-                                                   'Win32\\Release')  # подготовим путь к билду банка
-                    mask = ['bssetup.msi', 'CalcCRC.exe']
-                    copy_files_from_all_subdirectories(build_path_bank, dir_patch_libfiles_inettemp(), mask, [])
-                    mask = ['BssPluginSetup.exe', 'BssPluginWebKitSetup.exe']
-                    copy_files_from_all_subdirectories(build_path_bank, dir_patch_libfiles_inettemp(), mask, [])
-
+                    mask = ['BssPluginSetup.exe', 'BssPluginSetupAdmin.exe', 'BssPluginSetupNoHost.exe',
+                            'BssPluginWebKitSetup.exe', 'BssPluginSetup64.exe', 'BssPluginSetupGPB.exe',
+                            'BssPluginSetupGPBNoHost.exe']
                     for release in ['32', '64']:  # выкладываем билд в LIBFILES32(64).BNK
-                        build_path_bank = os.path.join(DIR_BUILD_BK, 'Win{}\\Release'.format(release))
-                        copy_files_from_all_subdirectories(build_path_bank, dir_patch_libfiles_bnk(release),
-                                                           ['UpdateIc.exe'], [])
-                        copy_files_from_all_subdirectories(build_path_bank, dir_patch_libfiles_bnk_www_exe(release),
-                                                           ['bsiset.exe'], [])
-                        mask = ['bsi.dll', 'bsi.jar']
-                        copy_files_from_all_subdirectories(build_path_bank,
-                                                           dir_patch_libfiles_bnk_www_bsiscripts_rtic(release), mask,
-                                                           [])
-                        copy_files_from_all_subdirectories(build_path_bank,
-                                                           dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release), mask,
-                                                           [])
-
                         build_path = os.path.join(DIR_BUILD_IC, 'Win{}\\Release'.format('32'))
-                        mask = ['BssPluginSetup.exe', 'BssPluginSetupAdmin.exe', 'BssPluginSetupNoHost.exe',
-                                'BssPluginWebKitSetup.exe', 'BssPluginSetup64.exe', 'BssPluginSetupGPB.exe',
-                                'BssPluginSetupGPBNoHost.exe']
-                        copy_files_from_all_subdirectories(build_path,
-                                                           dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(
-                                                               build_ic_version,
-                                                               release),
-                                                           mask, [])
-                        copy_files_from_all_subdirectories(build_path,
-                                                           dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(
-                                                               build_ic_version,
-                                                               release),
-                                                           mask, [])
+                        for www_path in [dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(build_ic_version,release),
+                                        dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_ic_version,release)]:
+                            copy_files_from_all_subdirectories(build_path, www_path, mask, [])
 
                 elif settings.PlaceBuildIntoPatchBK:
                     if instance == INSTANCE_BANK:
@@ -1724,8 +1651,12 @@ def download_build(settings):
                         copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'], [])
                         copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'],
                                                            [])  # один файл CBStart.exe в корень патча
+                        mask = ['bssetup.msi', 'CalcCRC.exe']
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
+                        mask = ['BssPluginSetup.exe', 'BssPluginWebKitSetup.exe']
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
                     for release in ['32', '64']:  # выкладываем остальной билд для Б и БК для версий 32 и 64
-                        build_path = os.path.join(DIR_BUILD_BK, 'Win{}\\Release'.format(release))
+                        build_path = os.path.join(DIR_BUILD_BK, f'Win{release}\\Release')
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance, release),
                                                            mask_for_exe_dir, excluded_files)
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance, release),
@@ -1733,6 +1664,20 @@ def download_build(settings):
                         copy_files_from_all_subdirectories(build_path, dir_patch_cbstart(instance, release),
                                                            ['CBStart.exe'], [])
                         if instance == INSTANCE_BANK:
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk(release),
+                                                               ['UpdateIc.exe'], [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_exe(release),
+                                                               ['bsiset.exe'], [])
+                            mask = ['bsi.dll', 'bsi.jar']
+                            copy_files_from_all_subdirectories(build_path,
+                                                               dir_patch_libfiles_bnk_www_bsiscripts_rtic(release),
+                                                               mask,
+                                                               [])
+                            copy_files_from_all_subdirectories(build_path,
+                                                               dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release),
+                                                               mask,
+                                                               [])
+
                             # заполняем TEMPLATE шаблон клиента в банковском патче
                             copy_files_from_all_subdirectories(build_path,
                                                                dir_patch_libfiles_template_distribx_client_exe(release),
@@ -1840,15 +1785,15 @@ def copy_bls(clean_destination_dir, source_dir, destination_dir):
             bls_version = '17/20'
         if clean_destination_dir:
             clean(destination_dir)
-        log('COPYING BLS ("{}" version style) from "{}" to {}'.format(bls_version, source_dir, destination_dir))
+        log(f'COPYING BLS ("{bls_version}" version style) from "{source_dir}" to {destination_dir}')
         try:
             copy_tree(source_dir, destination_dir)
         except BaseException as exc:
-            log('\tERROR when copying ({})'.format(exc))
+            log(f'\tERROR when copying ({exc})')
             return False
         return True
     else:
-        log('NOT COPYING BLS. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING BLS. Path {source_dir} not exists')
         return False
 
 
@@ -1856,15 +1801,12 @@ def copy_bls(clean_destination_dir, source_dir, destination_dir):
 def copy_bll(settings):
     log('COPYING BLL files to patch')
     bll_files_only_bank = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS, '.bll', ['?b*.bls'])
-    bll_files_only_rts = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS, '.bll',
-                                                                      ['RT_*.bls', 'sscommon.bls', 'ssxml.bls',
-                                                                       'sserrors.bls'])
-    bll_files_only_mba = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS_SOURCE_RCK, '.bll',
-                                                                      ['*.bls'])
+    bll_files_only_rts = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS, '.bll', ['RT_*.bls', 'sscommon.bls', 'ssxml.bls', 'sserrors.bls'])
+    bll_files_only_mba = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS_SOURCE_RCK, '.bll', ['*.bls'])
     bll_files_all = list_files_remove_paths_and_change_extension(DIR_COMPARED_BLS, '.bll', ['*.bls'])
     bll_files_tmp = list_files_by_list(DIR_BUILD_BK, bll_files_all)
     if len(bll_files_tmp) != len(bll_files_all):
-        log('\tERROR: Not all changed BLS files were compiled {}'.format(list(set(bll_files_all) - set(bll_files_tmp))))
+        log(f'\tERROR: Not all changed BLS files were compiled {list(set(bll_files_all) - set(bll_files_tmp))}')
         return False
 
     bll_files_client_mba = list(set(bll_files_all) - set(bll_files_only_bank) - set(bll_files_only_rts))
@@ -1872,39 +1814,26 @@ def copy_bll(settings):
     bll_files_all = list(set(bll_files_all) - set(bll_files_only_rts))
 
     # копируем bll для банка по списку bll_files_all
-    copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK),
-                                       bll_files_all, [])
+    copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_all, [])
     # копируем bll для RTS по списку bll_files_only_rts
     if settings.BuildRTSZIP:
         if settings.Is20Version:
             for release in ['32', '64']:
-                copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(release),
-                                                   bll_files_only_rts, [])
+                copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(release), bll_files_only_rts, [])
         else:
-            copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(),
-                                               bll_files_only_rts, [])
+            copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(), bll_files_only_rts, [])
     else:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK),
-                                           bll_files_only_rts, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_only_rts, [])
 
     # копируем bll для клиента по разнице списков  bll_files_all-bll_files_only_bank
     if settings.ClientEverythingInEXE:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT),
-                                           bll_files_client, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT_MBA),
-                                           bll_files_client_mba, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_exe(),
-                                           bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT), bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT_MBA), bll_files_client_mba, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_exe(), bll_files_client, [])
     else:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK,
-                                           dir_patch_libfiles_user(INSTANCE_CLIENT),
-                                           bll_files_client, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK,
-                                           dir_patch_libfiles_user(INSTANCE_CLIENT_MBA),
-                                           bll_files_client_mba, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK,
-                                           dir_patch_libfiles_template_distrib_client_user(),
-                                           bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT), bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT_MBA), bll_files_client_mba, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_user(), bll_files_client, [])
     return True
 
 
@@ -1915,12 +1844,12 @@ def copy_yaml():
         yaml_list = list_files_of_directory(source_dir, "*.yaml")
         if len(yaml_list) > 0:
             destination_dir = dir_patch_libfilesreact()
-            log('COPYING YAML files to {}'.format(destination_dir))
+            log(f'COPYING YAML files to {destination_dir}')
             copy_files_from_dir(source_dir, destination_dir, '*.yaml')
         else:
-            log('NOT COPYING YAML. No yaml files in {}'.format(source_dir))
+            log(f'NOT COPYING YAML. No yaml files in {source_dir}')
     else:
-        log('NOT COPYING YAML. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING YAML. Path {source_dir} not exists')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1928,10 +1857,10 @@ def copy_xsd():
     source_dir = DIR_COMPARED_XSD
     if os.path.exists(source_dir):
         destination_dir = dir_patch_libfiles_subsys_xsd(INSTANCE_BANK)
-        log('COPYING XSD files to {}'.format(destination_dir))
+        log(f'COPYING XSD files to {destination_dir}')
         copy_tree(source_dir, destination_dir)
     else:
-        log('NOT COPYING XSD. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING XSD. Path {source_dir} not exists')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1942,16 +1871,16 @@ def copy_www(settings):
             if settings.Is20Version:
                 for release in ['32', '64']:
                     destination_dir = dir_patch_libfiles_bnk_www(release)
-                    log('COPYING WWW files to {}'.format(destination_dir))
+                    log(f'COPYING WWW files to {destination_dir}')
                     copy_tree(source_dir, destination_dir)
             else:
                 destination_dir = dir_patch_libfiles_bnk_www()
-                log('COPYING WWW files to {}'.format(destination_dir))
+                log(f'COPYING WWW files to {destination_dir}')
                 copy_tree(source_dir, destination_dir)
         except BaseException as exc:
-            log('\tERROR when copying ({})'.format(exc))
+            log(f'\tERROR when copying ({exc})')
     else:
-        log('NOT COPYING WWW. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING WWW. Path {source_dir} not exists')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1963,21 +1892,21 @@ def copy_rt_tpl(settings):
                 if settings.Is20Version:
                     for release in ['32', '64']:
                         destination_dir = dir_patch_libfiles_bnk_rts_subsys_template(release)
-                        log('COPYING RT_TPL files to {}'.format(destination_dir))
+                        log(f'COPYING RT_TPL files to {destination_dir}')
                         copy_tree(source_dir, destination_dir)
                 else:
                     destination_dir = dir_patch_libfiles_bnk_rts_subsys_template()
-                    log('COPYING RT_TPL files to {}'.format(destination_dir))
+                    log(f'COPYING RT_TPL files to {destination_dir}')
                     copy_tree(source_dir, destination_dir)
             else:
                 destination_dir = dir_patch_libfiles_subsys_template()
-                log('COPYING RT_TPL files to {}'.format(destination_dir))
+                log(f'COPYING RT_TPL files to {destination_dir}')
                 copy_tree(source_dir, destination_dir)
 
         except BaseException as exc:
-            log('\tERROR when copying ({})'.format(exc))
+            log(f'\tERROR when copying ({exc})')
     else:
-        log('NOT COPYING RT_TPL. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING RT_TPL. Path {source_dir} not exists')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1985,10 +1914,10 @@ def copy_CommonLibraries():
     source_dir = DIR_COMPARED_CommonLibraries
     if os.path.exists(source_dir):
         destination_dir = dir_patch_libfiles(INSTANCE_BANK)
-        log('COPYING CommonLibraries files to {}'.format(destination_dir))
+        log(f'COPYING CommonLibraries files to {destination_dir}')
         copy_tree(source_dir, destination_dir)
     else:
-        log('NOT COPYING CommonLibraries. Path {} not exists'.format(source_dir))
+        log(f'NOT COPYING CommonLibraries. Path {source_dir} not exists')
 
 
 # -------------------------------------------------------------------------------------------------
@@ -2009,13 +1938,10 @@ def copy_rtf(settings):
                 destination_dirs.append(dir_patch_libfiles_template_distrib_client_subsys_print_rtf())
                 if settings.BuildRTSZIP:
                     if settings.Is20Version:
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf('32'))
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf('64'))
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf('32'))
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf('64'))
                     else:
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf())
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf())
             # RepJet для всех
             if source_dir == DIR_COMPARED_RTF_REPJET:
                 what = 'RepJet'
@@ -2025,36 +1951,28 @@ def copy_rtf(settings):
                 destination_dirs.append(dir_patch_libfiles_template_distrib_client_subsys_print_repjet())
                 if settings.BuildRTSZIP:
                     if settings.Is20Version:
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet(
-                                '32'))
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet(
-                                '64'))
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet('32'))
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet('64'))
                     else:
-                        destination_dirs.append(
-                            dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet())
+                        destination_dirs.append(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet())
             for destination_dir in destination_dirs:
-                log('COPYING {} files from {} to {}'.format(what, source_dir, destination_dir))
+                log(f'COPYING {what} files from {source_dir} to {destination_dir}')
                 copy_files_from_dir(source_dir, destination_dir)
         else:
-            log('NOT COPYING RTF from {}. Path not exists'.format(source_dir))
+            log(f'NOT COPYING RTF from {source_dir}. Path not exists')
 
 
 # -------------------------------------------------------------------------------------------------
 def copy_mba_dll():
-    copy_files_of_version(os.path.join(DIR_BUILD_BK, 'DLL'),
-                          DIR_BUILD_BK, 'Win32', ['*.dll'], [])
+    copy_files_of_version(os.path.join(DIR_BUILD_BK, 'DLL'), DIR_BUILD_BK, 'Win32', ['*.dll'], [])
 
 
 # -------------------------------------------------------------------------------------------------
 def make_decision_compilation_or_restart():
     continue_compilation = False
     if os.path.exists(DIR_AFTER_BLS):
-        log('Folder {} EXISTS. So we could CONTINUE bls-compilation.\n'
-            '\tAsking Maestro for decision.'.format(DIR_AFTER_BLS))
-        continue_compilation = input('Maestro, please, ENTER any letter to CONTINUE bls '
-                                     'compilation (otherwise patch building will be RESTARTED):') != ''
+        log(f'Folder {DIR_AFTER_BLS} EXISTS. So we could CONTINUE bls-compilation.\n\tAsking Maestro for decision.')
+        continue_compilation = input('Maestro, please, ENTER any letter to CONTINUE bls compilation (otherwise patch building will be RESTARTED):') != ''
         if continue_compilation:
             log('\tMaestro decided to CONTINUE with bls-compilation instead of restart patch building')
         else:
@@ -2063,7 +1981,7 @@ def make_decision_compilation_or_restart():
             response = input(
                 '\tREALLY?!\n\tMaestro, please, ENTER "Y" to CLEAR ALL and RESTART patch building:').upper()
             if response and response != 'Y':
-                log('\tERROR: wrong answer {}'.format(response))
+                log(f'\tERROR: wrong answer {response}')
                 exit(1000)
             continue_compilation = response != 'Y'
     return continue_compilation
@@ -2074,7 +1992,7 @@ def get_git_log(settings):
     to_tag = settings.TagAfter
     git_repo = Repo.init(DIR_AFTER)
     git = git_repo.git
-    log_items = git.log('--format=%B', '--no-merges', '--abbrev-commit', '{}..{}'.format(from_tag, to_tag)).split('\n')
+    log_items = git.log('--format=%B', '--no-merges', '--abbrev-commit', f'{from_tag}..{to_tag}').split('\n')
     jira_tickets = []
     for log_item in log_items:
         found = re.findall(r'/?\w+-\d+', log_item)
@@ -2084,7 +2002,7 @@ def get_git_log(settings):
         file_name = get_filename_jira_tickets()
         make_dirs(os.path.dirname(file_name))
         with open(file_name, mode='w') as f:
-            log('JIRA TICKETS from "{}" to "{}" saved to {}'.format(from_tag, to_tag, file_name))
+            log(f'JIRA TICKETS from "{from_tag}" to "{to_tag}" saved to {file_name}')
             jira_tickets = list(dict.fromkeys(jira_tickets))  # removing duplicates
             f.writelines(','.join(jira_tickets))
 
@@ -2182,4 +2100,4 @@ if __name__ == "__main__":
     elif argument == '/compile' or argument == '-compile':
         compile_only()
     else:
-        log('UNKNOWN ARGUMENT {}'.format(argument))
+        log(f'UNKNOWN ARGUMENT {argument}')
