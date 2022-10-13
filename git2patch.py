@@ -1594,7 +1594,7 @@ def download_build(settings):
         instances.append(INSTANCE_CLIENT)
         instances.append(INSTANCE_CLIENT_MBA)
         build_version = __copy_build__(build, build_crypto, DIR_BUILD_BK)
-    if build_ic:
+    if build_ic and settings.PlaceBuildIntoPatchIC:
         instances.append(INSTANCE_IC)
         build_ic_version = __copy_build__(build_ic, build_crypto, DIR_BUILD_IC)
 
@@ -1618,7 +1618,7 @@ def download_build(settings):
         settings.Is20Version = is20
 
         #  Если в настройках включено копирование билда в патч
-        if settings.PlaceBuildIntoPatchBK or settings.PlaceBuildIntoPatchIC:
+        if settings.PlaceBuildIntoPatchBK:  # or settings.PlaceBuildIntoPatchIC
             log(f'COPYING build into patch for {instance}')
             excluded_files = ''
             if instance == INSTANCE_BANK:
@@ -1643,111 +1643,69 @@ def download_build(settings):
                                         dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_ic_version,release)]:
                             copy_files_from_all_subdirectories(build_path, www_path, mask, [])
 
-                elif settings.PlaceBuildIntoPatchBK:
+                elif instance != INSTANCE_IC and settings.PlaceBuildIntoPatchBK:
                     if instance == INSTANCE_BANK:
                         build_path = os.path.join(DIR_BUILD_BK, 'Win32\\Release')
                         # это копируются все файлы, которые будут участвовать в компиляции BLS на следующем шаге
                         # т.к. в результате __copy_build__ весь билд оказывается разделен на Win32 и Win64
                         copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'], [])
-                        copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'],
-                                                           [])  # один файл CBStart.exe в корень патча
+                        # copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'], [])  # один файл CBStart.exe в корень патча
                         mask = ['bssetup.msi', 'CalcCRC.exe']
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
                         mask = ['BssPluginSetup.exe', 'BssPluginWebKitSetup.exe']
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
                     for release in ['32', '64']:  # выкладываем остальной билд для Б и БК для версий 32 и 64
                         build_path = os.path.join(DIR_BUILD_BK, f'Win{release}\\Release')
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance, release),
-                                                           mask_for_exe_dir, excluded_files)
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance, release),
-                                                           ['*.dll'], excluded_for_system_dir)
-                        copy_files_from_all_subdirectories(build_path, dir_patch_cbstart(instance, release),
-                                                           ['CBStart.exe'], [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance, release), mask_for_exe_dir, excluded_files)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance, release), ['*.dll'], excluded_for_system_dir)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_cbstart(instance, release), ['CBStart.exe'], [])
                         if instance == INSTANCE_BANK:
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk(release),
-                                                               ['UpdateIc.exe'], [])
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_exe(release),
-                                                               ['bsiset.exe'], [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk(release), ['UpdateIc.exe'], [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_exe(release), ['bsiset.exe'], [])
                             mask = ['bsi.dll', 'bsi.jar']
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_bnk_www_bsiscripts_rtic(release),
-                                                               mask,
-                                                               [])
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release),
-                                                               mask,
-                                                               [])
-
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release), mask, [])
                             # заполняем TEMPLATE шаблон клиента в банковском патче
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_template_distribx_client_exe(release),
-                                                               mask_for_exe_dir,
-                                                               const_excluded_build_for_CLIENT)
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_template_distribx_client_system(
-                                                                   release),
-                                                               ['*.dll'], excluded_for_system_client_dir)
-                            mask = ['CalcCRC.exe', 'Setup.exe', 'Install.exe', 'eif2base.exe', 'ilKern.dll',
-                                    'GetIName.dll']
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_template_distribx(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx_client_exe(release), mask_for_exe_dir, const_excluded_build_for_CLIENT)
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx_client_system( release), ['*.dll'], excluded_for_system_client_dir)
+                            mask = ['CalcCRC.exe', 'Setup.exe', 'Install.exe', 'eif2base.exe', 'ilKern.dll', 'GetIName.dll']
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx(release), mask, [])
                             mask = ['ilGroup.dll', 'iliGroup.dll', 'ilProt.dll', 'ilCpyDoc.dll']
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_template_languagex_en(release), mask,
-                                                               [])
-                            copy_files_from_all_subdirectories(build_path,
-                                                               dir_patch_libfiles_template_languagex_ru(release), mask,
-                                                               [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_en(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_ru(release), mask, [])
 
             else:  # для билдов 15 и 17
                 build_path = DIR_BUILD_BK
                 if instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA] \
                         and settings.PlaceBuildIntoPatchBK:
                     # выкладываем билд для Б и БК
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance), mask_for_exe_dir,
-                                                       excluded_files)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance), mask_for_exe_dir, excluded_files)
                     if settings.ClientEverythingInEXE and instance == INSTANCE_CLIENT:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance), ['*.dll'],
-                                                           excluded_for_system_dir)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance), ['*.dll'], excluded_for_system_dir)
                     else:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance), ['*.dll'],
-                                                           excluded_for_system_dir)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance), ['*.dll'], excluded_for_system_dir)
 
                 if instance == INSTANCE_BANK and settings.PlaceBuildIntoPatchBK:
-                    copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'],
-                                                       [])  # один файл в корень
+                    copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'], [])  # один файл в корень
                     # заполняем билдом TEMPLATE шаблон клиента в банковском патче
                     mask = ['*.exe', '*.ex', '*.bpl']
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_exe(),
-                                                       mask,
-                                                       const_excluded_build_for_CLIENT)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_exe(), mask, const_excluded_build_for_CLIENT)
                     if settings.ClientEverythingInEXE:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_exe(),
-                                                           ['*.dll'],
-                                                           excluded_for_system_client_dir)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_exe(), ['*.dll'], excluded_for_system_client_dir)
                     else:
-                        copy_files_from_all_subdirectories(build_path,
-                                                           dir_patch_libfiles_template_distrib_client_system(),
-                                                           ['*.dll'],
-                                                           excluded_for_system_client_dir)
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_system(), ['*.dll'], excluded_for_system_client_dir)
                     mask = ['CalcCRC.exe', 'Setup.exe', 'Install.exe', 'eif2base.exe', 'ilKern.dll', 'GetIName.dll']
                     copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib(), mask, [])
                     mask = ['ilGroup.dll', 'iliGroup.dll', 'ilProt.dll', 'ilCpyDoc.dll']
                     copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en(), mask, [])
                     copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru(), mask, [])
-                    copy_files_from_all_subdirectories(build_path,
-                                                       dir_patch_libfiles_template_language_en_client_system(), mask,
-                                                       [])
-                    copy_files_from_all_subdirectories(build_path,
-                                                       dir_patch_libfiles_template_language_ru_client_system(), mask,
-                                                       [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en_client_system(), mask, [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru_client_system(), mask, [])
                     # заполняем LIBFILES.BNK в банковском патче билдом для БК
                     mask = ['autoupgr.exe', 'bscc.exe', 'compiler.exe', 'operedit.exe', 'testconn.exe', 'treeedit.exe']
                     copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_add(), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_bsiset_exe(), ['bsiset.exe'],
-                                                       [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_license_exe(),
-                                                       ['protcore.exe'], [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_bsiset_exe(), ['bsiset.exe'], [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_license_exe(), ['protcore.exe'], [])
 
                 if instance == INSTANCE_IC and settings.PlaceBuildIntoPatchIC:
                     # заполняем LIBFILES.BNK в банковском патче билдом для ИК
@@ -1756,18 +1714,14 @@ def download_build(settings):
                     if settings.BuildRTSZIP:
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_exe(), mask, [])
                     else:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(INSTANCE_BANK),
-                                                           mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(INSTANCE_BANK), mask, [])
                     mask = ['llComDat.dll', 'llrtscfg.dll', 'llxmlman.dll', 'msxml2.bpl']
                     if settings.BuildRTSZIP:
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_system(), mask, [])
                     else:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(INSTANCE_BANK),
-                                                           mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(),
-                                                       ['bsi.dll'], [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(),
-                                                       ['bsi.dll'], [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(INSTANCE_BANK), mask, [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(), ['bsi.dll'], [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(), ['bsi.dll'], [])
                     # todo INETTEMP
     return True
 
