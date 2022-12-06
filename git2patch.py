@@ -26,8 +26,10 @@ if python_version < '3.10':
     print(f'Error: Version of python interpreter should start from 3.10 ({python_version})')
     quit(-1)
 
-EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=100, thread_name_prefix='thread')
+THREAD_NAME_PREFIX='th'
+EXECUTOR = concurrent.futures.ThreadPoolExecutor(thread_name_prefix=THREAD_NAME_PREFIX) #max_workers=4, 
 LOCK = threading.RLock()
+CONDITION = threading.Condition()
 
 INSTANCE_BANK = "BANK"
 INSTANCE_IC = "IC"
@@ -56,231 +58,288 @@ DIR_COMPARED_XSD = os.path.join(DIR_COMPARED, 'XSD')
 DIR_PATCH = os.path.join(DIR_TEMP, 'PATCH')
 
 
-def dir_after_base(instance): return os.path.join(DIR_AFTER, 'BASE', instance)
+def dir_after_base(instance): 
+    return os.path.join(DIR_AFTER, 'BASE', instance)
 
 
-def dir_compared_base(instance): return os.path.join(DIR_COMPARED, 'BASE', instance)
+def dir_compared_base(instance): 
+    return os.path.join(DIR_COMPARED, 'BASE', instance)
 
 
-def dir_patch(instance=''): return os.path.join(DIR_PATCH, instance)
+def dir_patch(instance=''): 
+    return os.path.join(DIR_PATCH, instance)
 
 
-def dir_patch_data(instance): return os.path.join(dir_patch(instance), 'DATA')
+def dir_patch_data(instance): 
+    return os.path.join(dir_patch(instance), 'DATA')
 
 
-def dir_patch_cbstart(instance, version=''): return os.path.join(dir_patch(instance), f'CBSTART{version}')
+def dir_patch_cbstart(instance, version=''): 
+    return os.path.join(dir_patch(instance), f'CBSTART{version}')
 
 
-def dir_patch_libfiles(instance, version=''): return os.path.join(dir_patch(instance), f'LIBFILES{version}')
+def dir_patch_libfiles(instance, version=''): 
+    return os.path.join(dir_patch(instance), f'LIBFILES{version}')
 
 
-def dir_patch_libfiles_user(instance): return os.path.join(dir_patch_libfiles(instance), 'USER')
+def dir_patch_libfiles_user(instance): 
+    return os.path.join(dir_patch_libfiles(instance), 'USER')
 
 
-def dir_patch_libfiles_source(): return os.path.join(dir_patch_libfiles(INSTANCE_BANK), 'SOURCE')
+def dir_patch_libfiles_source(): 
+    return os.path.join(dir_patch_libfiles(INSTANCE_BANK), 'SOURCE')
 
 
-def dir_patch_libfiles_bnk(version=''): return os.path.join(dir_patch(INSTANCE_BANK), f'LIBFILES{version}.BNK')
+def dir_patch_libfiles_bnk(version=''): 
+    return os.path.join(dir_patch(INSTANCE_BANK), f'LIBFILES{version}.BNK')
 
 
-def dir_patch_libfiles_bnk_add(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'add')
+def dir_patch_libfiles_bnk_add(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk(version), 'add')
 
 
-def dir_patch_libfiles_bnk_bsiset_exe(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'bsiset', 'EXE')
+def dir_patch_libfiles_bnk_bsiset_exe(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk(version), 'bsiset', 'EXE')
 
 
-def dir_patch_libfiles_bnk_license_exe(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'license', 'EXE')
+def dir_patch_libfiles_bnk_license_exe(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk(version), 'license', 'EXE')
 
 
-def dir_patch_libfiles_bnk_rts(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'rts')
+def dir_patch_libfiles_bnk_rts(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk(version), 'rts')
 
 
-def dir_patch_libfiles_bnk_rts_exe(version=''): return os.path.join(dir_patch_libfiles_bnk_rts(version), 'EXE')
+def dir_patch_libfiles_bnk_rts_exe(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts(version), 'EXE')
 
 
-def dir_patch_libfiles_bnk_rts_user(version=''): return os.path.join(dir_patch_libfiles_bnk_rts(version), 'USER')
+def dir_patch_libfiles_bnk_rts_user(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts(version), 'USER')
 
 
-def dir_patch_libfiles_bnk_rts_system(version=''): return os.path.join(dir_patch_libfiles_bnk_rts(version), 'SYSTEM')
+def dir_patch_libfiles_bnk_rts_system(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts(version), 'SYSTEM')
 
 
-def dir_patch_libfiles_bnk_rts_subsys(version=''): return os.path.join(dir_patch_libfiles_bnk_rts(version), 'SUBSYS')
+def dir_patch_libfiles_bnk_rts_subsys(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts(version), 'SUBSYS')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_template(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys(version), 'TEMPLATE')
+def dir_patch_libfiles_bnk_rts_subsys_template(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys(version), 'TEMPLATE')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys(version), 'INSTCLNT')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys(version), 'INSTCLNT')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt(version), 'TEMPLATE')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt(version), 'TEMPLATE')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template(version), 'DISTRIB')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template(version), 'DISTRIB')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib(version), 'CLIENT')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib(version), 'CLIENT')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client(version), 'SUBSYS')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client(version), 'SUBSYS')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys(version), 'PRINT')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys(version), 'PRINT')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf(
-        version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version), 'RTF')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_rtf(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version), 'RTF')
 
 
-def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet(
-        version=''): return os.path.join(
-    dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version), 'RepJet')
+def dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print_repjet(version=''):
+    return os.path.join(dir_patch_libfiles_bnk_rts_subsys_instclnt_template_distrib_client_subsys_print(version), 'RepJet')
 
 
-def dir_patch_libfiles_bnk_www(version=''): return os.path.join(dir_patch_libfiles_bnk(version), 'WWW')
+def dir_patch_libfiles_bnk_www(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk(version), 'WWW')
 
 
-def dir_patch_libfiles_bnk_www_exe(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version), 'EXE')
+def dir_patch_libfiles_bnk_www_exe(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www(version), 'EXE')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version),'BSI_scripts')
+def dir_patch_libfiles_bnk_www_bsiscripts(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www(version),'BSI_scripts')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtic(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_ic')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtic(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_ic')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_Admin')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_Admin')
 
 
-def dir_patch_libfiles_bnk_www_bsiscripts_rtwa(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_wa')
+def dir_patch_libfiles_bnk_www_bsiscripts_rtwa(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsiscripts(version), 'rt_wa')
 
 
-def dir_patch_libfiles_bnk_www_bsisites(version=''): return os.path.join(dir_patch_libfiles_bnk_www(version), 'BSI_sites')
+def dir_patch_libfiles_bnk_www_bsisites(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www(version), 'BSI_sites')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtic(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_ic')
+def dir_patch_libfiles_bnk_www_bsisites_rtic(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_ic')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtwa(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_wa')
+def dir_patch_libfiles_bnk_www_bsisites_rtwa(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites(version), 'rt_wa')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtic_code(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtic(version), 'CODE')
+def dir_patch_libfiles_bnk_www_bsisites_rtic_code(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtic(version), 'CODE')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version=''): return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtwa(version), 'CODE')
+def dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtwa(version), 'CODE')
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(build_version, version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites_rtic_code(version), build_version)
+def dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(build_version, version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtic_code(version), build_version)
 
 
-def dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_version, version=''): return os.path.join(
-    dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version), build_version)
+def dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_version, version=''): 
+    return os.path.join(dir_patch_libfiles_bnk_www_bsisites_rtwa_code(version), build_version)
 
 
-def dir_patch_libfiles_exe(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'EXE')
+def dir_patch_libfiles_exe(instance, version=''): 
+    return os.path.join(dir_patch_libfiles(instance, version), 'EXE')
 
 
-def dir_patch_libfiles_system(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'SYSTEM')
+def dir_patch_libfiles_system(instance, version=''): 
+    return os.path.join(dir_patch_libfiles(instance, version), 'SYSTEM')
 
 
-def dir_patch_libfiles_subsys(instance, version=''): return os.path.join(dir_patch_libfiles(instance, version), 'SUBSYS')
+def dir_patch_libfiles_subsys(instance, version=''): 
+    return os.path.join(dir_patch_libfiles(instance, version), 'SUBSYS')
 
 
-def dir_patch_libfiles_subsys_template(): return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK, ''), 'TEMPLATE')
+def dir_patch_libfiles_subsys_template(): 
+    return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK, ''), 'TEMPLATE')
 
 
-def dir_patch_libfiles_subsys_print(instance, version=''): return os.path.join(dir_patch_libfiles_subsys(instance, version), 'PRINT')
+def dir_patch_libfiles_subsys_print(instance, version=''): 
+    return os.path.join(dir_patch_libfiles_subsys(instance, version), 'PRINT')
 
 
-def dir_patch_libfiles_subsys_xsd(instance, version=''): return os.path.join(dir_patch_libfiles_subsys(instance, version), 'XSD')
+def dir_patch_libfiles_subsys_xsd(instance, version=''): 
+    return os.path.join(dir_patch_libfiles_subsys(instance, version), 'XSD')
 
 
-def dir_patch_libfiles_subsys_print_rtf(instance, version=''): return os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RTF')
+def dir_patch_libfiles_subsys_print_rtf(instance, version=''): 
+    return os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RTF')
 
 
-def dir_patch_libfiles_subsys_print_repjet(instance, version=''): os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RepJet')
+def dir_patch_libfiles_subsys_print_repjet(instance, version=''): 
+    return os.path.join(dir_patch_libfiles_subsys_print(instance, version), 'RepJet')
 
 
-def dir_patch_libfiles_instclnt(): return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK), 'INSTCLNT')
+def dir_patch_libfiles_instclnt(): 
+    return os.path.join(dir_patch_libfiles_subsys(INSTANCE_BANK), 'INSTCLNT')
 
 
-def dir_patch_libfiles_inettemp(): return os.path.join(dir_patch_libfiles_instclnt(), 'INETTEMP')
+def dir_patch_libfiles_inettemp(): 
+    return os.path.join(dir_patch_libfiles_instclnt(), 'INETTEMP')
 
 
-def dir_patch_libfiles_template(): return os.path.join(dir_patch_libfiles_instclnt(), 'TEMPLATE')
+def dir_patch_libfiles_template(): 
+    return os.path.join(dir_patch_libfiles_instclnt(), 'TEMPLATE')
 
 
-def dir_patch_libfiles_template_distribx(version): return os.path.join(dir_patch_libfiles_template(), f'DISTRIB.X{version}')
+def dir_patch_libfiles_template_distribx(version): 
+    return os.path.join(dir_patch_libfiles_template(), f'DISTRIB.X{version}')
 
 
-def dir_patch_libfiles_template_distribx_client(version): return os.path.join(dir_patch_libfiles_template_distribx(version), 'CLIENT')
+def dir_patch_libfiles_template_distribx_client(version): 
+    return os.path.join(dir_patch_libfiles_template_distribx(version), 'CLIENT')
 
 
-def dir_patch_libfiles_template_distribx_client_exe(version): return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'EXE')
+def dir_patch_libfiles_template_distribx_client_exe(version): 
+    return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'EXE')
 
 
-def dir_patch_libfiles_template_distribx_client_system(version): return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'SYSTEM')
+def dir_patch_libfiles_template_distribx_client_system(version): 
+    return os.path.join(dir_patch_libfiles_template_distribx_client(version), 'SYSTEM')
 
 
-def dir_patch_libfiles_template_languagex(version): return os.path.join(dir_patch_libfiles_template(), f'Language.X{version}')
+def dir_patch_libfiles_template_languagex(version): 
+    return os.path.join(dir_patch_libfiles_template(), f'Language.X{version}')
 
 
-def dir_patch_libfiles_template_languagex_en(version): return os.path.join(dir_patch_libfiles_template_languagex(version), 'ENGLISH')
+def dir_patch_libfiles_template_languagex_en(version): 
+    return os.path.join(dir_patch_libfiles_template_languagex(version), 'ENGLISH')
 
 
-def dir_patch_libfiles_template_languagex_ru(version): return os.path.join(dir_patch_libfiles_template_languagex(version), 'RUSSIAN')
+def dir_patch_libfiles_template_languagex_ru(version): 
+    return os.path.join(dir_patch_libfiles_template_languagex(version), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_distrib(): return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
+def dir_patch_libfiles_template_distrib(): 
+    return os.path.join(dir_patch_libfiles_template(), 'DISTRIB')
 
 
 def dir_patch_libfiles_template_distrib_client():
     return os.path.join(dir_patch_libfiles_template_distrib(), 'CLIENT')
 
 
-def dir_patch_libfiles_template_distrib_client_exe():  return os.path.join(dir_patch_libfiles_template_distrib_client(), 'EXE')
+def dir_patch_libfiles_template_distrib_client_exe():  
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'EXE')
 
 
-def dir_patch_libfiles_template_distrib_client_system(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SYSTEM')
+def dir_patch_libfiles_template_distrib_client_system(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SYSTEM')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SUBSYS')
+def dir_patch_libfiles_template_distrib_client_subsys(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'SUBSYS')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys(), 'PRINT')
+def dir_patch_libfiles_template_distrib_client_subsys_print(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client_subsys(), 'PRINT')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print_rtf(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RTF')
+def dir_patch_libfiles_template_distrib_client_subsys_print_rtf(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RTF')
 
 
-def dir_patch_libfiles_template_distrib_client_subsys_print_repjet(): return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
+def dir_patch_libfiles_template_distrib_client_subsys_print_repjet(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client_subsys_print(), 'RepJet')
 
 
-def dir_patch_libfiles_template_distrib_client_user(): return os.path.join(dir_patch_libfiles_template_distrib_client(), 'USER')
+def dir_patch_libfiles_template_distrib_client_user(): 
+    return os.path.join(dir_patch_libfiles_template_distrib_client(), 'USER')
 
 
-def dir_patch_libfiles_template_language(): return os.path.join(dir_patch_libfiles_template(), 'Language')
+def dir_patch_libfiles_template_language(): 
+    return os.path.join(dir_patch_libfiles_template(), 'Language')
 
 
-def dir_patch_libfiles_template_language_en(): return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
+def dir_patch_libfiles_template_language_en(): 
+    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH')
 
 
-def dir_patch_libfiles_template_language_ru(): return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
+def dir_patch_libfiles_template_language_ru(): 
+    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN')
 
 
-def dir_patch_libfiles_template_language_en_client_system(): return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_en_client_system(): 
+    return os.path.join(dir_patch_libfiles_template_language(), 'ENGLISH', 'CLIENT', 'SYSTEM')
 
 
-def dir_patch_libfiles_template_language_ru_client_system(): return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN', 'CLIENT', 'SYSTEM')
+def dir_patch_libfiles_template_language_ru_client_system(): 
+    return os.path.join(dir_patch_libfiles_template_language(), 'RUSSIAN', 'CLIENT', 'SYSTEM')
 
 
 def get_filename_upgrade10_eif(instance): return os.path.join(dir_patch(instance), 'Upgrade(10).eif')
@@ -446,210 +505,210 @@ UPGRADE10_HEADER = \
 
 UPGRADE10_FOOTER = "[END]\n"
 EXCLUDED_BUILD_FOR_BANK = ['autoupgr.exe', 'operedit.exe',
-                           'crccons.exe', 'crprotst.exe',
-                           'mbank.exe', 'memleak.exe',
-                           'msysleak.exe', 'nsfilead.exe',
-                           'nsservis.exe', 'nssrv.exe',
-                           'nstcpad.exe',
-                           'brhelper.exe', 'ctunnel.exe',
-                           'defstart.exe', 'defupdt.exe',
-                           'dosprot.exe',
-                           'lang2htm.exe',
-                           'licjoin.exe', 'lresedit.exe',
-                           'bsledit.exe', 'bssiclogparser.exe',
-                           'bssoapserver.exe', 'bsspluginhost.exe',
-                           'bsspluginmanager.exe', 'bsspluginsetup.exe',
-                           'bsspluginsetupnohost.exe', 'bsspluginwebkitsetup.exe',
-                           'bssuinst.exe', 'cliex.exe',
-                           'convertattaches.exe', 'copier.exe',
-                           'ectrlsd.bpl', 'eif2base.exe',
-                           'install.exe', 'lrescmp.exe',
-                           'lreseif.exe', 'odbcmon.exe',
-                           'abank.exe', 'alphalgn.exe',
-                           'pbls.exe',
-                           'rbtreed.bpl', 'rtoolsdt.bpl',
-                           'pmonitor.bpl', 'pmonitor.exe',
-                           'syneditd.bpl', 'updateic.exe',
-                           'virtualtreesd.bpl', 'eif2base64_srv.exe',
-                           'eif2base64_cli.dll', 'odbclog.dll',
-                           'olha.dll', 'olha10.dll',
-                           'olha9.dll', 'phemng.dll',
-                           'pika.dll',
-                           'authserv.exe',
-                           'bsroute.exe', 'bssaxset.exe',
-                           'bsdebug.exe', 'chngtree.exe',
-                           'blstest.exe', 'ptchglue.exe', 'ptchhelp.exe',
-                           'repcmd.exe', 'reqexec.exe',
-                           'sysupgr.exe',
-                           'testodbc.exe', 'testsign.exe',
-                           'textrepl.exe', 'transtbl.exe',
-                           'treeedit.exe', 'vbank.exe',
-                           'verifyer.exe']
+                        'crccons.exe', 'crprotst.exe',
+                        'mbank.exe', 'memleak.exe',
+                        'msysleak.exe', 'nsfilead.exe',
+                        'nsservis.exe', 'nssrv.exe',
+                        'nstcpad.exe',
+                        'brhelper.exe', 'ctunnel.exe',
+                        'defstart.exe', 'defupdt.exe',
+                        'dosprot.exe',
+                        'lang2htm.exe',
+                        'licjoin.exe', 'lresedit.exe',
+                        'bsledit.exe', 'bssiclogparser.exe',
+                        'bssoapserver.exe', 'bsspluginhost.exe',
+                        'bsspluginmanager.exe', 'bsspluginsetup.exe',
+                        'bsspluginsetupnohost.exe', 'bsspluginwebkitsetup.exe',
+                        'bssuinst.exe', 'cliex.exe',
+                        'convertattaches.exe', 'copier.exe',
+                        'ectrlsd.bpl', 'eif2base.exe',
+                        'install.exe', 'lrescmp.exe',
+                        'lreseif.exe', 'odbcmon.exe',
+                        'abank.exe', 'alphalgn.exe',
+                        'pbls.exe',
+                        'rbtreed.bpl', 'rtoolsdt.bpl',
+                        'pmonitor.bpl', 'pmonitor.exe',
+                        'syneditd.bpl', 'updateic.exe',
+                        'virtualtreesd.bpl', 'eif2base64_srv.exe',
+                        'eif2base64_cli.dll', 'odbclog.dll',
+                        'olha.dll', 'olha10.dll',
+                        'olha9.dll', 'phemng.dll',
+                        'pika.dll',
+                        'authserv.exe',
+                        'bsroute.exe', 'bssaxset.exe',
+                        'bsdebug.exe', 'chngtree.exe',
+                        'blstest.exe', 'ptchglue.exe', 'ptchhelp.exe',
+                        'repcmd.exe', 'reqexec.exe',
+                        'sysupgr.exe',
+                        'testodbc.exe', 'testsign.exe',
+                        'textrepl.exe', 'transtbl.exe',
+                        'treeedit.exe', 'vbank.exe',
+                        'verifyer.exe']
 
 # todo убрать из клиента rg_*
 const_excluded_build_for_CLIENT = EXCLUDED_BUILD_FOR_BANK + ['bsrdrct.exe',
-                                                             'bsauthserver.exe',
-                                                             'bsauthservice.exe',
-                                                             'bsem.exe',
-                                                             'cbank500.exe',
-                                                             'gbank.exe',
-                                                             'bsiset.exe',
-                                                             'inetcfg.exe',
-                                                             'bsmonitorserver.exe',
-                                                             'bsmonitorservice.exe',
-                                                             'btrdict.exe',
-                                                             'cbserv.exe',
-                                                             'combuff.exe',
-                                                             'alphamon.exe',
-                                                             'admin.exe',
-                                                             'phoneserver.exe',
-                                                             'phoneservice.exe',
-                                                             'iniconf.exe',
-                                                             'bsphone.bpl',
-                                                             'phetools.bpl',
-                                                             'infoserv.exe',
-                                                             'infoservice.exe',
-                                                             'bscc.exe',
-                                                             'protcore.exe',
-                                                             'rts.exe',
-                                                             'rtsadmin.exe',
-                                                             'rtsinfo.exe',
-                                                             'rtsmbc.exe',
-                                                             'rtsserv.exe',
-                                                             'tcpagent.exe',
-                                                             'BSSAxInf.exe',
-                                                             'tredir.exe',
-                                                             'upgr20i.exe',
-                                                             'bsi.dll',
-                                                             'cr_altok2x.dll',
-                                                             'cr_ccm3x2x.dll',
-                                                             'cr_epass2x.dll',
-                                                             'cr_pass2x.dll',
-                                                             'cr_sms2x.dll',
-                                                             'dboblobtbl.dll',
-                                                             'dbofileattach.dll',
-                                                             'eif2base64_cli.dll',
-                                                             'ilshield.dll',
-                                                             'llazklnk.dll',
-                                                             'llexctrl.dll',
-                                                             'llrpjet2.dll',
-                                                             'npbssplugin.dll',
-                                                             'perfcontrol.dll',
-                                                             'ptchmake.exe',
-                                                             'updateal.exe',
-                                                             'TranConv.exe',
-                                                             'wwwgate.exe',
-                                                             'TestTran.exe',
-                                                             'infoinst.exe',
-                                                             'gate_tst.exe',
-                                                             'testconn.exe',
-                                                             'etoknman.exe',
-                                                             'stunnel.exe',
-                                                             'defcfgup.exe',
-                                                             'rxctl5.bpl',
-                                                             'rtsrcfg.exe',
-                                                             'rtsconst.exe',
-                                                             'rtftobmp.exe',
-                                                             'PtchMakeCl.exe',
-                                                             'PrintServer.exe',
-                                                             'phonelib.bpl',
-                                                             'NewBase.exe',
-                                                             'btrieve.bpl',
-                                                             'mssobjs.bpl',
-                                                             'bsslgn.exe',
-                                                             'compiler.exe',
-                                                             'VrfAgava.exe',
-                                                             'BSSAxInf.exe',
-                                                             'bsImport.exe',
-                                                             'lresexpt.bpl',
-                                                             'BSChecker.exe',
-                                                             'bs1.exe',
-                                                             'VerifCCom.exe',
-                                                             'blksrv.bpl',
-                                                             'bssetup.exe',
-                                                             'aqtora32.dll',
-                                                             'blocksrv.dll',
-                                                             'rg_verb4.dll',
-                                                             'rg_vesta.dll',
-                                                             'cc.dll',
-                                                             'ccom.dll',
-                                                             'rg_vldt.dll',
-                                                             'sendreq.dll',
-                                                             'signcom.dll',
-                                                             'TrConvL.dll',
-                                                             'wsxml.dll',
-                                                             'llmsshnd.dll',
-                                                             'llmssobj.dll',
-                                                             'llsocket.dll',
-                                                             'llnetusr.dll',
-                                                             'cr_epass.dll',
-                                                             'llnotify.dll',
-                                                             'llnsPars.dll',
-                                                             'llnstool.dll',
-                                                             'llPhone.dll',
-                                                             'llPrReq.dll',
-                                                             'llrrts.dll',
-                                                             'ilCpyDocEx.dll',
-                                                             'llrtscfg.dll',
-                                                             'cr_pass.dll',
-                                                             'cr_sms.dll',
-                                                             'cr_util.dll',
-                                                             'llsmpp.dll',
-                                                             'llsnap.dll',
-                                                             'llsonic.dll',
-                                                             'devauth.dll',
-                                                             'devcheck.dll',
-                                                             'Dialogic.dll',
-                                                             'llSRP.dll',
-                                                             'eif2base.dll',
-                                                             'Emulator.dll',
-                                                             'LLSysInf.dll',
-                                                             'GetIName.dll',
-                                                             'lltblxml.dll',
-                                                             'llTrAuth.dll',
-                                                             'llTrServ.dll',
-                                                             'llubstr.dll',
-                                                             'llVTB.dll',
-                                                             'llwebdav.dll',
-                                                             'llwsexc.dll',
-                                                             'llxml3ed.dll',
-                                                             'llxmlcnz.dll',
-                                                             'mig173.dll',
-                                                             'mssreq.dll',
-                                                             'notiflog.dll',
-                                                             'rbaseal.dll',
-                                                             'RBProxy.dll',
-                                                             'rg_agava.dll',
-                                                             'rg_altok.dll',
-                                                             'rg_bsssl.dll',
-                                                             'rg_call.dll',
-                                                             'libcrypt.dll',
-                                                             'rg_calus.dll',
-                                                             'rg_ccm3e.dll',
-                                                             'llamqdll.dll',
-                                                             'rg_ccm3x.dll',
-                                                             'rg_ccom2.dll',
-                                                             'llCGate.dll',
-                                                             'rg_clear.dll',
-                                                             'rg_crypc.dll',
-                                                             'rg_cryptfld.dll',
-                                                             'rg_efssl.dll',
-                                                             'rg_exc4.dll',
-                                                             'rg_lite.dll',
-                                                             'llmssreq.dll',
-                                                             'lledint.dll',
-                                                             'rg_msapi.dll',
-                                                             'llepass.dll',
-                                                             'rg_msp11.dll',
-                                                             'rg_msp13.dll',
-                                                             'llfraud.dll',
-                                                             'llgraph.dll',
-                                                             'llgraph1.dll',
-                                                             'rg_msp2.dll',
-                                                             'rg_mspex.dll',
-                                                             'llhttp.dll',
-                                                             'rg_ossl.dll'
-                                                             ]
+                                                            'bsauthserver.exe',
+                                                            'bsauthservice.exe',
+                                                            'bsem.exe',
+                                                            'cbank500.exe',
+                                                            'gbank.exe',
+                                                            'bsiset.exe',
+                                                            'inetcfg.exe',
+                                                            'bsmonitorserver.exe',
+                                                            'bsmonitorservice.exe',
+                                                            'btrdict.exe',
+                                                            'cbserv.exe',
+                                                            'combuff.exe',
+                                                            'alphamon.exe',
+                                                            'admin.exe',
+                                                            'phoneserver.exe',
+                                                            'phoneservice.exe',
+                                                            'iniconf.exe',
+                                                            'bsphone.bpl',
+                                                            'phetools.bpl',
+                                                            'infoserv.exe',
+                                                            'infoservice.exe',
+                                                            'bscc.exe',
+                                                            'protcore.exe',
+                                                            'rts.exe',
+                                                            'rtsadmin.exe',
+                                                            'rtsinfo.exe',
+                                                            'rtsmbc.exe',
+                                                            'rtsserv.exe',
+                                                            'tcpagent.exe',
+                                                            'BSSAxInf.exe',
+                                                            'tredir.exe',
+                                                            'upgr20i.exe',
+                                                            'bsi.dll',
+                                                            'cr_altok2x.dll',
+                                                            'cr_ccm3x2x.dll',
+                                                            'cr_epass2x.dll',
+                                                            'cr_pass2x.dll',
+                                                            'cr_sms2x.dll',
+                                                            'dboblobtbl.dll',
+                                                            'dbofileattach.dll',
+                                                            'eif2base64_cli.dll',
+                                                            'ilshield.dll',
+                                                            'llazklnk.dll',
+                                                            'llexctrl.dll',
+                                                            'llrpjet2.dll',
+                                                            'npbssplugin.dll',
+                                                            'perfcontrol.dll',
+                                                            'ptchmake.exe',
+                                                            'updateal.exe',
+                                                            'TranConv.exe',
+                                                            'wwwgate.exe',
+                                                            'TestTran.exe',
+                                                            'infoinst.exe',
+                                                            'gate_tst.exe',
+                                                            'testconn.exe',
+                                                            'etoknman.exe',
+                                                            'stunnel.exe',
+                                                            'defcfgup.exe',
+                                                            'rxctl5.bpl',
+                                                            'rtsrcfg.exe',
+                                                            'rtsconst.exe',
+                                                            'rtftobmp.exe',
+                                                            'PtchMakeCl.exe',
+                                                            'PrintServer.exe',
+                                                            'phonelib.bpl',
+                                                            'NewBase.exe',
+                                                            'btrieve.bpl',
+                                                            'mssobjs.bpl',
+                                                            'bsslgn.exe',
+                                                            'compiler.exe',
+                                                            'VrfAgava.exe',
+                                                            'BSSAxInf.exe',
+                                                            'bsImport.exe',
+                                                            'lresexpt.bpl',
+                                                            'BSChecker.exe',
+                                                            'bs1.exe',
+                                                            'VerifCCom.exe',
+                                                            'blksrv.bpl',
+                                                            'bssetup.exe',
+                                                            'aqtora32.dll',
+                                                            'blocksrv.dll',
+                                                            'rg_verb4.dll',
+                                                            'rg_vesta.dll',
+                                                            'cc.dll',
+                                                            'ccom.dll',
+                                                            'rg_vldt.dll',
+                                                            'sendreq.dll',
+                                                            'signcom.dll',
+                                                            'TrConvL.dll',
+                                                            'wsxml.dll',
+                                                            'llmsshnd.dll',
+                                                            'llmssobj.dll',
+                                                            'llsocket.dll',
+                                                            'llnetusr.dll',
+                                                            'cr_epass.dll',
+                                                            'llnotify.dll',
+                                                            'llnsPars.dll',
+                                                            'llnstool.dll',
+                                                            'llPhone.dll',
+                                                            'llPrReq.dll',
+                                                            'llrrts.dll',
+                                                            'ilCpyDocEx.dll',
+                                                            'llrtscfg.dll',
+                                                            'cr_pass.dll',
+                                                            'cr_sms.dll',
+                                                            'cr_util.dll',
+                                                            'llsmpp.dll',
+                                                            'llsnap.dll',
+                                                            'llsonic.dll',
+                                                            'devauth.dll',
+                                                            'devcheck.dll',
+                                                            'Dialogic.dll',
+                                                            'llSRP.dll',
+                                                            'eif2base.dll',
+                                                            'Emulator.dll',
+                                                            'LLSysInf.dll',
+                                                            'GetIName.dll',
+                                                            'lltblxml.dll',
+                                                            'llTrAuth.dll',
+                                                            'llTrServ.dll',
+                                                            'llubstr.dll',
+                                                            'llVTB.dll',
+                                                            'llwebdav.dll',
+                                                            'llwsexc.dll',
+                                                            'llxml3ed.dll',
+                                                            'llxmlcnz.dll',
+                                                            'mig173.dll',
+                                                            'mssreq.dll',
+                                                            'notiflog.dll',
+                                                            'rbaseal.dll',
+                                                            'RBProxy.dll',
+                                                            'rg_agava.dll',
+                                                            'rg_altok.dll',
+                                                            'rg_bsssl.dll',
+                                                            'rg_call.dll',
+                                                            'libcrypt.dll',
+                                                            'rg_calus.dll',
+                                                            'rg_ccm3e.dll',
+                                                            'llamqdll.dll',
+                                                            'rg_ccm3x.dll',
+                                                            'rg_ccom2.dll',
+                                                            'llCGate.dll',
+                                                            'rg_clear.dll',
+                                                            'rg_crypc.dll',
+                                                            'rg_cryptfld.dll',
+                                                            'rg_efssl.dll',
+                                                            'rg_exc4.dll',
+                                                            'rg_lite.dll',
+                                                            'llmssreq.dll',
+                                                            'lledint.dll',
+                                                            'rg_msapi.dll',
+                                                            'llepass.dll',
+                                                            'rg_msp11.dll',
+                                                            'rg_msp13.dll',
+                                                            'llfraud.dll',
+                                                            'llgraph.dll',
+                                                            'llgraph1.dll',
+                                                            'rg_msp2.dll',
+                                                            'rg_mspex.dll',
+                                                            'llhttp.dll',
+                                                            'rg_ossl.dll'
+                                                            ]
 
 
 # -------------------------------------------------------------------------------------------------
@@ -766,8 +825,8 @@ def copy_tree(src, destination, ignore=None):
         for f in files:
             if f not in ignored:
                 copy_tree(os.path.join(src, f),
-                          os.path.join(destination, f),
-                          ignore)
+                        os.path.join(destination, f),
+                        ignore)
     else:
         shutil.copyfile(src, destination)
 
@@ -794,7 +853,7 @@ def list_files_of_directory(path, mask):
 # -------------------------------------------------------------------------------------------------
 def list_files_of_all_subdirectories(path, mask):
     files_list = [os.path.join(d, file_name) for d, _, files in os.walk(path)
-                  for file_name in fnmatch.filter(files, mask)]
+                for file_name in fnmatch.filter(files, mask)]
     return sorted(files_list)
 
 
@@ -803,7 +862,7 @@ def list_files_by_list(path, mask_list):
     res_list = []
     for mask in mask_list:
         res_list += [os.path.join(d, file_name) for d, _, files in os.walk(path)
-                     for file_name in fnmatch.filter(files, mask)]
+                    for file_name in fnmatch.filter(files, mask)]
     return res_list
 
 
@@ -919,7 +978,7 @@ def clean(path, masks=None):
                 for mask in masks:
                     # чистим все файлы по маске mask
                     [os.remove(os.path.join(d, file_name)) for d, _, files in os.walk(path) for file_name in
-                     fnmatch.filter(files, mask)]
+                    fnmatch.filter(files, mask)]
             else:
                 log(f'CLEANING {path}')
                 # Сначала чистим все файлы,
@@ -968,7 +1027,7 @@ def download_git_thread(git_tag_info):
 def download_from_git(settings):
     log('GIT DOWNLOAD BEGIN')
     git_tags_info = [{'git_tag': settings.TagBefore, 'git_url': settings.git_url, 'local_path': DIR_BEFORE},
-                     {'git_tag': settings.TagAfter, 'git_url': settings.git_url, 'local_path': DIR_AFTER}]
+                    {'git_tag': settings.TagAfter, 'git_url': settings.git_url, 'local_path': DIR_AFTER}]
     futures = []
     for git_tag_info in git_tags_info:
         futures.append(EXECUTOR.submit(download_git_thread, git_tag_info))
@@ -991,8 +1050,8 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
     if dircmp.common_dirs:
         for directory in dircmp.common_dirs:
             __compare_and_copy_dirs_recursively__(os.path.join(before, directory),
-                                                  os.path.join(after, directory),
-                                                  os.path.join(where_to_copy, directory))
+                                                os.path.join(after, directory),
+                                                os.path.join(where_to_copy, directory))
 
     if len(dircmp.diff_files):
         for file in dircmp.diff_files:
@@ -1066,22 +1125,22 @@ def make_upgrade10_eif_string_for_tables(file_name):
     # обновление дельтой
     elif file_name_lower == 'orderstartflag':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Flag'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                 " #TODO проверьте data таблицы"
+                " #TODO проверьте data таблицы"
     elif file_name_lower == 'docschemesettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                 " #TODO проверьте data таблицы"
+                " #TODO проверьте data таблицы"
     elif file_name_lower == 'docprintsettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'BranchID,CustId,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                 " #TODO проверьте data таблицы"
+                " #TODO проверьте data таблицы"
     elif file_name_lower == 'docmultiprintsettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'SchemeID,PrintFormName'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                 " #TODO проверьте data таблицы"
+                " #TODO проверьте data таблицы"
     elif file_name_lower == 'filtersettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ScrollerName'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO проверьте data таблицы"
+                "#TODO проверьте data таблицы"
     elif file_name_lower == 'linktxt':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'NameFormat'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO проверьте data таблицы"
+                "#TODO проверьте data таблицы"
     elif file_name_lower == 'absmanagertype':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'dcmversions':
@@ -1090,21 +1149,21 @@ def make_upgrade10_eif_string_for_tables(file_name):
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ConnType,SchemaName'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'remotenavmenus':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO проверьте data таблицы"
+                "#TODO проверьте data таблицы"
     elif file_name_lower == 'remotenavtrees':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO проверьте data таблицы, обновлять нужно только эталонное дерево"
+                "#TODO проверьте data таблицы, обновлять нужно только эталонное дерево"
     elif file_name_lower == 'offersettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Autokey'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'armabcode':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Code'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO обязательно дельту"
+                "#TODO обязательно дельту"
     elif file_name_lower == 'systemlogcodeset':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'TransactionType'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO обязательно дельту"
+                "#TODO обязательно дельту"
     elif file_name_lower == 'smssettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO обязательно дельту"
+                "#TODO обязательно дельту"
 
     # пересоздание
     elif file_name_lower == 'postclnt':
@@ -1121,7 +1180,7 @@ def make_upgrade10_eif_string_for_tables(file_name):
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'remotepasscfg':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO: скорее всего, нельзя оставлять эту таблицу в патче!!!"
+                "#TODO: скорее всего, нельзя оставлять эту таблицу в патче!!!"
     elif file_name_lower == 'controlsettings' or \
             file_name_lower == 'controlconstants' or \
             file_name_lower == 'controlgroups':
@@ -1129,17 +1188,17 @@ def make_upgrade10_eif_string_for_tables(file_name):
     elif file_name_lower == 'remoterolesactions' or \
             file_name_lower == 'remoterolesdocsettings':
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ один ВЫЗОВ ubRoles, в этой data нужно оставить " \
-                 "дельту изменений remoterolesactions можно оставить полностью>"
+                "дельту изменений remoterolesactions можно оставить полностью>"
     elif file_name_lower.startswith('bs3'):
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ ВЫЗОВ ua-шки  >"
     elif file_name_lower == 'freedoctype':
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ ВЫЗОВ ua-шки  >"
     else:  # Если заливается структура полностью
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                 "#TODO проверьте способ обновления таблицы, сейчас - заливается полностью. " \
-                 "Для дельты и обновления строк: |TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'название_полей'. " \
-                 "Только заменить структуру десятки: |TRUE|FALSE|FALSE|FALSE|TRUE|FALSE|NULL. " \
-                 "Заменить структуру и пересоздать: |TRUE|TRUE|FALSE|TRUE|TRUE|FALSE|NULL."
+                "#TODO проверьте способ обновления таблицы, сейчас - заливается полностью. " \
+                "Для дельты и обновления строк: |TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'название_полей'. " \
+                "Только заменить структуру десятки: |TRUE|FALSE|FALSE|FALSE|TRUE|FALSE|NULL. " \
+                "Заменить структуру и пересоздать: |TRUE|TRUE|FALSE|TRUE|TRUE|FALSE|NULL."
     return result
 
 
@@ -1162,7 +1221,7 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Визуальные формы'>"
         elif structure_type == '14':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|FALSE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> " \
-                     "#TODO проверьте настройку / существующие ветки не обновляются, смотри https://jira.bssys.com/browse/GPBDBOPE-18"
+                    "#TODO проверьте настройку / существующие ветки не обновляются, смотри https://jira.bssys.com/browse/GPBDBOPE-18"
         elif structure_type == '16':
             result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|NULL|'Автопроцедуры'>"
         elif structure_type == '18':
@@ -1178,7 +1237,7 @@ def make_upgrade10_eif_string_by_file_name(counter, file_name):
         elif structure_type == '65':
             if file_name.lower() == 'subsys' or file_name.lower() == 'mbsc2':
                 result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'RTS SUBSYS(65)'> " \
-                         "#TODO проверьте настройку"
+                        "#TODO проверьте настройку"
             else:
                 result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'RTS(65)'>"
         elif structure_type == '66':
@@ -1376,57 +1435,61 @@ def open_encoding_aware(path):
 
 
 # -------------------------------------------------------------------------------------------------
-def bls_get_uses_graph(path):
+def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
     def __replace_unwanted_symbols__(pattern, string):
         find_all = re.findall(pattern, string, flags=re.MULTILINE)
         for find_here in find_all:
             string = string.replace(find_here, '')
         return string
+    
+    file_name_and_dir = os.path.split(os.path.abspath(file_name))
+    file_name_without_path = file_name_and_dir[1].lower()
+    file_dir = file_name_and_dir[0]
+    with open_encoding_aware(file_name) as f:
+        if f:
+            text = f.read()
+            # удаляем комментарии, которые располагаются между фигурными скобками "{ .. }"
+            text = __replace_unwanted_symbols__(r'{[\S\s]*?}', text)
+            # удаляем комментарии, которые располагаются между скобками "(* .. *)"
+            text = __replace_unwanted_symbols__(r'\(\*[\S\s]*?\*\)', text)
+            # удаляем однострочные комментарии, которые начинаются на "//"
+            text = __replace_unwanted_symbols__(r'//.*', text)
+            # находим текст между словом "uses" и ближайшей точкой с запятой
+            list_of_uses = re.findall(r'(?s)(?<=\buses\s)(.*?)(?=;)', text, flags=re.IGNORECASE)
 
-    bls_uses_graph = {}
-    files = list_files_of_all_subdirectories(path, '*.bls')
-    for file_name in files:
-        with open_encoding_aware(file_name) as f:
-            if f:
-                text = f.read()
-                # удаляем комментарии, которые располагаются между фигурными скобками "{ .. }"
-                text = __replace_unwanted_symbols__(r'{[\S\s]*?}', text)
-                # удаляем комментарии, которые располагаются между скобками "(* .. *)"
-                text = __replace_unwanted_symbols__(r'\(\*[\S\s]*?\*\)', text)
-                # удаляем однострочные комментарии, которые начинаются на "//"
-                text = __replace_unwanted_symbols__(r'//.*', text)
-                # находим текст между словом "uses" и ближайшей точкой с запятой
-                list_of_uses = re.findall(r'(?s)(?<=\buses\s)(.*?)(?=;)', text, flags=re.IGNORECASE)
+            
+            # добавляем пустой элемент для файла "file_name", на случай, если файл не имеет uses
+            bls_uses_graph.update({file_name_without_path: [file_name, []]})
 
-                file_name_without_path = split_filename(file_name).lower()
-                # добавляем пустой элемент для файла "file_name", на случай, если файл не имеет uses
-                bls_uses_graph.update({file_name_without_path: [file_name, []]})
+            if len(list_of_uses):
+                for text_of_uses in list_of_uses:
+                    # разбиваем найденный текст на части между запятыми
+                    uses_list = [line.strip().lower() + '.bls' for line in text_of_uses.split(',') if line.strip()]
+                    if uses_list:
+                        # проверим, что такой файл еще не был обработан
 
-                if len(list_of_uses):
-                    for text_of_uses in list_of_uses:
-                        # разбиваем найденный текст на части между запятыми
-                        uses_list = [line.strip() + '.bls' for line in text_of_uses.split(',') if line.strip()]
-                        if uses_list:
-                            # проверим, что такой файл еще не был обработан
-
-                            item_already_in_list = bls_uses_graph.get(file_name_without_path)
-                            # если элемент с названием "file_name_without_path" уже есть в списке bls_uses_graph
-                            if item_already_in_list:
-                                # то дополним его [список_зависимостей] списком "uses_list"
-                                item_already_in_list[1].extend(uses_list)
-                            else:
-                                # TODO: ЭТА ВЕТКА НЕ НУЖНА, НАДО УДАЛИТЬ (ВЫШЕ УЖЕ ДОБАВЛЯЮ ПУСТОЙ ЭЛЕМЕНТ)
-                                # если файла нет в списке зависимостей,
-                                # то добавим "{название_файла: [полное_название_с_путем, [список_зависимостей]]}"
-                                # bls_uses_graph.update({file_name_without_path: [file_name, uses_list]})
-                                pass
-
+                        item_already_in_list = bls_uses_graph.get(file_name_without_path)
+                        # если элемент с названием "file_name_without_path" уже есть в списке bls_uses_graph
+                        if item_already_in_list:
+                            # то дополним его [список_зависимостей] списком "uses_list"
+                            item_already_in_list[1].extend(uses_list)
+                        else:
+                            # TODO: ЭТА ВЕТКА НЕ НУЖНА, НАДО УДАЛИТЬ (ВЫШЕ УЖЕ ДОБАВЛЯЮ ПУСТОЙ ЭЛЕМЕНТ)
+                            # если файла нет в списке зависимостей,
+                            # то добавим "{название_файла: [полное_название_с_путем, [список_зависимостей]]}"
+                            # bls_uses_graph.update({file_name_without_path: [file_name, uses_list]})
+                            pass
+                        
+                        for uses_item in uses_list:
+                            item_already_in_list = bls_uses_graph.get(uses_item)
+                            item_already_compiled = uses_item in compiled_list
+                            if not item_already_in_list and not item_already_compiled:
+                                bls_get_uses_graph(os.path.join(file_dir, uses_item), compiled_list, bls_uses_graph)
     return bls_uses_graph
 
 
 # -------------------------------------------------------------------------------------------------
-def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic_server, lic_profile, version, failed_files):
-    # log(BlsPath)
+def compile_one_file(build_path, bls_file_name, bls_path, uses_list, lic_server, lic_profile, version, failed_files, percents_to_log):
     # проверим, есть ли компилятор
     bscc_path = os.path.join(build_path, 'bscc.exe')
     if not os.path.exists(bscc_path):
@@ -1435,11 +1498,8 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
     run_str = bscc_path + f' "{bls_path}" -M0 -O0 -S{lic_server} -A{lic_profile} -R1'
     if version:
         run_str = run_str + f' -V"{version}"'
-    # log(run_str)
-    '''
-    subprocess.call(run_str)
-    return True
-    '''
+
+    log("\t{:>3}%".format(percents_to_log) + '\t' + bls_file_name)
     process = subprocess.Popen(run_str, shell=False, stdout=subprocess.PIPE)  # , stderr=subprocess.PIPE
     out, err = process.communicate()
     process.stdout.close()
@@ -1452,59 +1512,110 @@ def __bls_compile_one_file__(build_path, bls_file_name, bls_path, uses_list, lic
         log('\tCOMPILATION continues. Please wait...')
         return False
     else:
-        # log('\tCompiled "{}"'.format(bls_file_name))
         return True
 
 
 # -------------------------------------------------------------------------------------------------
-def __bls_compile_all_implementation__(lic_server, lic_profile, build_path,
-                                       bls_uses_graph, bls_file_name, observed_list,
-                                       version, tabs, failed_files):
-    bls_file_name = bls_file_name.lower()
-    if bls_file_name not in observed_list:  # если файл отсутствует в списке обработанных
-        percents = int(100.00 * len(observed_list) / len(bls_uses_graph))
-        log("{:>3}%".format(percents) + tabs + bls_file_name)
-        bls_item_info = bls_uses_graph.get(bls_file_name)
-        if bls_item_info:
-            bls_file_path = bls_item_info[0]
-            uses_list = bls_item_info[1]
-            if len(uses_list):  # если файл зависит от других файлов, то проведем
-                for UsesFileName in uses_list:  # компиляцию каждого файла
-                    __bls_compile_all_implementation__(lic_server,
-                                                       lic_profile,
-                                                       build_path,
-                                                       bls_uses_graph,
-                                                       UsesFileName,
-                                                       observed_list,
-                                                       version, tabs + "\t", failed_files)
-            if __bls_compile_one_file__(build_path, bls_file_name, bls_file_path,
-                                        uses_list, lic_server, lic_profile, version,
-                                        failed_files):
-                observed_list.append(bls_file_name)  # добавляем в список учтенных файлов
-        else:
-            log(tabs + f'No information about file to compile "{bls_file_name}". Probably not all SOURCE were downloaded.')
+def file_compiled(bls_file_name, compiled_list):
+    with LOCK:
+        return bls_file_name in compiled_list
 
 
 # -------------------------------------------------------------------------------------------------
-def bls_compile_all(lic_server, lic_profile, build_path, source_path, bll_version):
-    clean(build_path, ['*.bls', '*.bll', '*.ClassInfo'])  # очищаем каталог билда от bls и bll
-    log('BEGIN BLS COMPILATION. Please wait...')
-    copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'], [])  # копируем в каталог билда все bls
-    bls_uses_graph = bls_get_uses_graph(build_path)  # строим граф зависимостей по строкам uses
-    observed_list = []
-    failed_files = []
+def compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph, bls_file_name, 
+                            compiling_now_list, compiled_list, files_count, bll_version, failed_files):
+    
+    bls_file_name = bls_file_name.lower()
+
+    with CONDITION:
+        while bls_file_name in compiling_now_list:
+            CONDITION.wait()
+        compiling_now_list.append(bls_file_name)
+
+    try:
+        if file_compiled(bls_file_name, compiled_list):
+            # если файл уже откомпилирован
+            return
+
+        bls_item_info = bls_uses_graph.get(bls_file_name)
+        if not bls_item_info:
+            log(f'No information about file to compile "{bls_file_name}". Probably not all SOURCE were downloaded.')
+            return
+
+        bls_file_path = bls_item_info[0]
+        uses_list = bls_item_info[1]
+        
+        if len(uses_list):  # если файл зависит от других файлов, то проведем
+            for uses_file_name in uses_list:  # компиляцию каждого файла
+                # рекурсия, компилируем список зависимостей:
+                compile_recursive(lic_server,
+                                lic_profile,
+                                build_path,
+                                bls_uses_graph,
+                                uses_file_name,
+                                compiling_now_list,
+                                compiled_list,
+                                files_count,
+                                bll_version,
+                                failed_files)
+            
+        percents = int(100.00 * len(compiled_list) / files_count)
+        if compile_one_file(build_path, bls_file_name, bls_file_path,
+                        uses_list, lic_server, lic_profile, bll_version,
+                        failed_files, percents):
+            compiled_list.append(bls_file_name)  # добавляем в список учтенных файлов
+    
+    finally:
+        with CONDITION:
+            compiling_now_list.remove(bls_file_name)
+            CONDITION.notify_all()
+
+
+# -------------------------------------------------------------------------------------------------
+def compile_thread_function(lic_server, lic_profile, build_path, file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files):
+    if file_compiled(file_name, compiled_list):
+        log(f'{file_name} alredy done 3333333333333333')
+        return
+    
+    bls_uses_graph = {}
+
+    bls_get_uses_graph(file_name, compiled_list, bls_uses_graph)  # строим граф зависимостей по строкам uses    
     try:
         for bls_file_name in bls_uses_graph:  # компилируем все bls
-            __bls_compile_all_implementation__(lic_server, lic_profile, build_path, bls_uses_graph,
-                                               bls_file_name, observed_list,
-                                               bll_version, "\t", failed_files)
-        log(f"\tCOMPILED {len(observed_list)} of {len(bls_uses_graph)}")
-        if len(failed_files):
-            log(f"\tFAILED FILES({len(failed_files)}): {failed_files}")
-        return True
+            compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph,
+                                            bls_file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files)
     except FileNotFoundError as exc:
         log(f'\tERROR: {exc}')
-        return False
+
+
+# -------------------------------------------------------------------------------------------------
+def compile_all(lic_server, lic_profile, build_path, source_path, bll_version):
+    clean(build_path, ['*.bls', '*.bll', '*.ClassInfo'])  # очищаем каталог билда от bls и bll
+    begin_time = time.time()
+    log('BEGIN BLS COMPILATION. Please wait...')
+    copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'], [])  # копируем в каталог билда все bls
+
+    compiling_now_list = []
+    compiled_list = []
+    failed_files = []
+    futures = []
+    files = list_files_of_all_subdirectories(build_path, '*.bls')
+    files_count = len(files)
+    for file_name in files:
+        futures.append(EXECUTOR.submit(compile_thread_function, lic_server, lic_profile, build_path, 
+            file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files))
+            
+    done, not_done = concurrent.futures.wait(futures, return_when=concurrent.futures.FIRST_EXCEPTION)
+    for future in concurrent.futures.as_completed(done):
+        try:
+            future.result()
+        except Exception as exc:
+            log(f'Thread generated an exception: {exc}')
+
+    log(f"\tCOMPILED {len(compiled_list)} of {len(files)} (for {datetime.timedelta(seconds = time.time()-begin_time)} minutes)")
+    if len(failed_files):
+        log(f"\tFAILED FILES({len(failed_files)}): {failed_files}")
+    return True
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1877,7 +1988,7 @@ def copy_CommonLibraries():
 # -------------------------------------------------------------------------------------------------
 def copy_rtf(settings):
     source_dirs = [DIR_COMPARED_RTF, DIR_COMPARED_RTF_BANK,
-                   DIR_COMPARED_RTF_CLIENT, DIR_COMPARED_RTF_REPJET]
+                DIR_COMPARED_RTF_CLIENT, DIR_COMPARED_RTF_REPJET]
     for source_dir in source_dirs:
         if os.path.exists(source_dir):
             destination_dirs = []
@@ -1941,6 +2052,7 @@ def make_decision_compilation_or_restart():
     return continue_compilation
 
 
+# -------------------------------------------------------------------------------------------------
 def get_git_log(settings):
     from_tag = settings.TagBefore
     to_tag = settings.TagAfter
@@ -1963,6 +2075,7 @@ def get_git_log(settings):
 
 # -------------------------------------------------------------------------------------------------
 def patch():
+    begin_time = time.time()
     log('=' * 120)
     global_settings = GlobalSettings()
     if not global_settings.was_success():
@@ -2023,12 +2136,14 @@ def patch():
     # запускаем ЭТАП КОМПИЛЯЦИИ bls-файлов:
     if continue_compilation:
         # запустим компиляцию этой каши
-        if bls_compile_all(global_settings.LicenseServer, global_settings.LicenseProfile,
-                           DIR_BUILD_BK, DIR_AFTER_BLS,
-                           global_settings.BLLVersion):
+        if compile_all(global_settings.LicenseServer,
+                    global_settings.LicenseProfile,
+                    DIR_BUILD_BK, DIR_AFTER_BLS,
+                    global_settings.BLLVersion):
             # копируем готовые BLL в патч
             copy_bll(global_settings)
-    log('DONE')
+    log(f'DONE (for {datetime.timedelta(seconds = time.time()-begin_time)} minutes)')
+
 
 def compile_only():
     # пока не реализовано ----------------------------------------------
@@ -2040,9 +2155,8 @@ def compile_only():
         return
     if download_build(global_settings):
         if download_from_git(global_settings):
-            bls_compile_all(global_settings.LicenseServer, global_settings.LicenseProfile,
-                            DIR_BUILD_BK, DIR_AFTER_BLS,
-                            global_settings.BLLVersion)
+            compile_all(global_settings.LicenseServer, global_settings.LicenseProfile,
+                        DIR_BUILD_BK, DIR_AFTER_BLS, global_settings.BLLVersion)
 
 
 if __name__ == "__main__":
