@@ -1062,10 +1062,10 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
                 shutil.copy2(path, where_to_copy)
             else:
                 log(f'\tsomething wrong {path} -> {where_to_copy}')
-
-    if len(dircmp.same_files):
+    
+    if dircmp.same_files:
         match, mismatch, errors = filecmp.cmpfiles(before, after, dircmp.same_files, shallow=False)
-        if len(mismatch):
+        if mismatch:
             for file in mismatch:
                 path = os.path.join(after, file)
                 if os.path.isfile(path):
@@ -1094,7 +1094,9 @@ def compare_directories_before_and_after():
         log('BEGIN compare directories:')
         log(f'\tBEFORE: {DIR_BEFORE}')
         log(f'\tAFTER:  {DIR_AFTER}')
+        begin_time = time.time()
         __compare_and_copy_dirs_recursively__(DIR_BEFORE, DIR_AFTER, DIR_COMPARED)
+        log(f'COMPARED for {datetime.timedelta(seconds = time.time()-begin_time)} minutes')
     else:
         os.rename(DIR_AFTER, DIR_COMPARED)
         log('\tUSING folder "AFTER" as compare result, because "BEFORE" not exists:')
@@ -1121,26 +1123,22 @@ def make_upgrade10_eif_string_for_tables(file_name):
 
     elif file_name.find(".") > 0:  # Для блобов
         result = "<{}|{}|'{}'|TRUE|FALSE|FALSE|FALSE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'>"
-
+    # загружить как дефолтную, но обязательно обновлять bls-кой
+    elif file_name_lower == 'bs3kvit':
+        result = "<{}|{}|'{}'|TRUE|TRUE|FALSE|FALSE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'> #TODO: ДОЛЖЕН БЫТЬ ВЫЗОВ ua-шки"
     # обновление дельтой
     elif file_name_lower == 'orderstartflag':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Flag'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                " #TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Flag'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'docschemesettings':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                " #TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'docprintsettings':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'BranchID,CustId,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                " #TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'BranchID,CustId,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'docmultiprintsettings':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'SchemeID,PrintFormName'|NULL|NULL|NULL|NULL|'Таблицы'>" \
-                " #TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'SchemeID,PrintFormName'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'filtersettings':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ScrollerName'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ScrollerName'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'linktxt':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'NameFormat'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'NameFormat'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'absmanagertype':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'dcmversions':
@@ -1148,22 +1146,18 @@ def make_upgrade10_eif_string_for_tables(file_name):
     elif file_name_lower == 'transschema':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ConnType,SchemaName'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'remotenavmenus':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO проверьте data таблицы"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'remotenavtrees':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'> " \
                 "#TODO проверьте data таблицы, обновлять нужно только эталонное дерево"
     elif file_name_lower == 'offersettings':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Autokey'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'armabcode':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Code'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO обязательно дельту"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'Code'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO обязательно дельту"
     elif file_name_lower == 'systemlogcodeset':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'TransactionType'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO обязательно дельту"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'TransactionType'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO обязательно дельту"
     elif file_name_lower == 'smssettings':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'> " \
-                "#TODO обязательно дельту"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID,SchemeId'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO обязательно дельту"
 
     # пересоздание
     elif file_name_lower == 'postclnt':
