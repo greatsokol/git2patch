@@ -65,6 +65,8 @@ def dir_after_base(instance):
 def dir_compared_base(instance): 
     return os.path.join(DIR_COMPARED, 'BASE', instance)
 
+def dir_compared_bls(): 
+    return os.path.join(DIR_COMPARED, 'BLS')
 
 def dir_patch(instance=''): 
     return os.path.join(DIR_PATCH, instance)
@@ -866,9 +868,13 @@ def list_files_by_list(path, mask_list):
     return res_list
 
 
+def replace_ext(file_name, new_ext):
+    return os.path.splitext(file_name)[0] + new_ext
+
+
 # -------------------------------------------------------------------------------------------------
 def list_files_remove_paths_and_change_extension(path, new_ext, mask_list):
-    return [os.path.splitext(bls_file)[0] + new_ext for bls_file in
+    return [replace_ext(bls_file, new_ext) for bls_file in
             [split_filename(bls_file) for bls_file in list_files_by_list(path, mask_list)]]
 
 
@@ -1278,32 +1284,53 @@ def copy_table_10_files_for_data_files(instance):
 
 
 # -------------------------------------------------------------------------------------------------
+def make_upgrade10_eif_strings_for_ua_bls(counter):
+    result = []
+    ua_bls_list = list_files_of_all_subdirectories(dir_compared_bls(), 'u[abc]*.bls')
+    for file_path in ua_bls_list:
+        file_name = split_filename(file_path).lower()
+        if file_name not in ['ualib.bls', 'uacontrols.bls', 'uacustjb.bls']:
+            exports = bls_get_exports(file_path)
+            for function_name in exports:
+                bll_file_name = replace_ext(file_name, '.bll')
+                log(f'ADDING launch {bll_file_name}.{function_name} launch in upgrade(10).eif')
+                result.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'{function_name}'|NULL|'{bll_file_name}'|NULL|'Запуск функции {function_name}({bll_file_name})'>\n")
+                counter += 1
+    return result
+
+
+# -------------------------------------------------------------------------------------------------
 def generate_upgrade10_eif(instance):
-    eif_list = list_files_of_all_subdirectories(dir_compared_base(instance), '*.eif')
-    if len(eif_list) > 0:
-        data_dir = dir_patch_data(instance)
-        make_dirs(data_dir)
-        for eif_file in eif_list:
-            try:
-                shutil.copy2(eif_file, data_dir)
-            except EnvironmentError as exc:
-                log(f'\tUnable to copy file. {exc}')
+    data_dir = dir_patch_data(instance)
+    make_dirs(data_dir)
+    counter = 1
+    with open(get_filename_upgrade10_eif(instance), mode='w') as f:
+        f.writelines(UPGRADE10_HEADER)
+        line = make_upgrade10_eif_string_by_file_name(counter, 'Version(14).eif')
+        f.writelines(line)
+        counter += 1
 
-        eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
+        eif_list = list_files_of_all_subdirectories(dir_compared_base(instance), '*.eif')
         if len(eif_list) > 0:
-            with open(get_filename_upgrade10_eif(instance), mode='w') as f:
-                f.writelines(UPGRADE10_HEADER)
-
-                line = make_upgrade10_eif_string_by_file_name(1, 'Version(14).eif')
-                f.writelines(line)
-                counter = 2
+            for eif_file in eif_list:
+                try:
+                    shutil.copy2(eif_file, data_dir)
+                except EnvironmentError as exc:
+                    log(f'\tUnable to copy file. {exc}')
+            eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
+            if len(eif_list) > 0:
                 for eif_file in eif_list:
                     eif_file_name = split_filename(eif_file)
                     line = make_upgrade10_eif_string_by_file_name(counter, eif_file_name)
                     if line:
                         f.writelines(line)
                         counter += 1
-                f.writelines(UPGRADE10_FOOTER)
+        
+        lines = make_upgrade10_eif_strings_for_ua_bls(counter)
+        if lines:
+            f.writelines(lines)
+
+        f.writelines(UPGRADE10_FOOTER)
 
 
 # -------------------------------------------------------------------------------------------------
@@ -1429,28 +1456,41 @@ def open_encoding_aware(path):
 
 
 # -------------------------------------------------------------------------------------------------
-def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
-    def __replace_unwanted_symbols__(pattern, string):
-        find_all = re.findall(pattern, string, flags=re.MULTILINE)
-        for find_here in find_all:
-            string = string.replace(find_here, '')
-        return string
+def __replace_unwanted_symbols__(pattern, string):
+    find_all = re.findall(pattern, string, flags=re.MULTILINE)
+    for find_here in find_all:
+        string = string.replace(find_here, '')
+    return string
+
+
+def replace_unwanted_symbols(text):
+    # удаляем комментарии, которые располагаются между фигурными скобками "{ .. }"
+    text = __replace_unwanted_symbols__(r'{[\S\s]*?}', text)
+    # удаляем комментарии, которые располагаются между скобками "(* .. *)"
+    text = __replace_unwanted_symbols__(r'\(\*[\S\s]*?\*\)', text)
+    # удаляем однострочные комментарии, которые начинаются на "//"
+    return __replace_unwanted_symbols__(r'//.*', text)
     
+
+# -------------------------------------------------------------------------------------------------
+def bls_get_exports(file_name):
+    with open_encoding_aware(file_name) as f:
+        if f:
+            text = replace_unwanted_symbols(f.read())
+            # находим текст между словом "exports" и ближайшей точкой с запятой
+            return [fn.strip() for fn in re.findall(r'(?s)(?<=\bexports\s)(.*?)(?=;)', text, flags=re.IGNORECASE)]
+
+
+# -------------------------------------------------------------------------------------------------
+def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
     file_name_and_dir = os.path.split(os.path.abspath(file_name))
     file_name_without_path = file_name_and_dir[1].lower()
     file_dir = file_name_and_dir[0]
     with open_encoding_aware(file_name) as f:
         if f:
-            text = f.read()
-            # удаляем комментарии, которые располагаются между фигурными скобками "{ .. }"
-            text = __replace_unwanted_symbols__(r'{[\S\s]*?}', text)
-            # удаляем комментарии, которые располагаются между скобками "(* .. *)"
-            text = __replace_unwanted_symbols__(r'\(\*[\S\s]*?\*\)', text)
-            # удаляем однострочные комментарии, которые начинаются на "//"
-            text = __replace_unwanted_symbols__(r'//.*', text)
+            text = replace_unwanted_symbols(f.read())
             # находим текст между словом "uses" и ближайшей точкой с запятой
             list_of_uses = re.findall(r'(?s)(?<=\buses\s)(.*?)(?=;)', text, flags=re.IGNORECASE)
-
             
             # добавляем пустой элемент для файла "file_name", на случай, если файл не имеет uses
             bls_uses_graph.update({file_name_without_path: [file_name, []]})
@@ -1568,7 +1608,6 @@ def compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph, bls_f
 # -------------------------------------------------------------------------------------------------
 def compile_thread_function(lic_server, lic_profile, build_path, file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files):
     if file_compiled(file_name, compiled_list):
-        log(f'{file_name} alredy done 3333333333333333')
         return
     
     bls_uses_graph = {}
