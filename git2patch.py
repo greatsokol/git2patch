@@ -65,6 +65,12 @@ def dir_after_base(instance):
 def dir_compared_base(instance): 
     return os.path.join(DIR_COMPARED, 'BASE', instance)
 
+def dir_after_base_tables(instance): 
+    return os.path.join(dir_after_base(instance), 'TABLES')
+
+def dir_after_base_tabledata_config(instance): 
+    return os.path.join(dir_after_base(instance), 'Table data', 'Config')
+
 def dir_compared_bls(): 
     return os.path.join(DIR_COMPARED, 'BLS')
 
@@ -1181,9 +1187,7 @@ def make_upgrade10_eif_string_for_tables(file_name):
     elif file_name_lower == 'remotepasscfg':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|FALSE|FALSE|NULL|NULL|NULL|NULL|NULL|'Таблицы'> " \
                 "#TODO: скорее всего, нельзя оставлять эту таблицу в патче!!!"
-    elif file_name_lower == 'controlsettings' or \
-            file_name_lower == 'controlconstants' or \
-            file_name_lower == 'controlgroups':
+    elif file_name_lower == 'controlgroups': #file_name_lower == 'controlsettings' or file_name_lower == 'controlconstants' or 
         result = "<{}|{}|'{}'|  ДОЛЖЕН БЫТЬ ВЫЗОВ uaControls или другой ua-шки  >"
     elif file_name_lower == 'remoterolesactions' or \
             file_name_lower == 'remoterolesdocsettings':
@@ -1203,7 +1207,7 @@ def make_upgrade10_eif_string_for_tables(file_name):
 
 
 # -------------------------------------------------------------------------------------------------
-def make_upgrade10_eif_string_by_file_name(counter, file_name):
+def upgrade10_eif_by_file_name(counter, file_name):
     if file_name.lower() == 'version(14).eif':  # идите на хуй https://jira.bssys.com/browse/GPBDBOPE-18
         return f"  <{counter}|14|'Version'|TRUE|TRUE|FALSE|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|NULL|'Конфигурации'> #TODO проверьте настройку\n"
 
@@ -1284,50 +1288,86 @@ def copy_table_10_files_for_data_files(instance):
 
 
 # -------------------------------------------------------------------------------------------------
-def make_upgrade10_eif_strings_for_ua_bls(counter):
-    result = []
-    ua_bls_list = list_files_of_all_subdirectories(dir_compared_bls(), 'u[abc]*.bls')
+def upgrade10_ua_bls(instance, counter, lines):
+    mask = ''
+    if instance==INSTANCE_BANK:
+        mask = 'u[ab]*.bls'
+    elif instance in [INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
+        mask = 'u[ac]*.bls'
+    else: 
+        raise(f'Unknown instance {instance}')
+
+    ua_bls_list = list_files_of_all_subdirectories(dir_compared_bls(), mask)
     for file_path in ua_bls_list:
         file_name = split_filename(file_path).lower()
         if file_name not in ['ualib.bls', 'uacontrols.bls', 'uacustjb.bls']:
             exports = bls_get_exports(file_path)
             for function_name in exports:
                 bll_file_name = replace_ext(file_name, '.bll')
-                log(f'ADDING launch {bll_file_name}.{function_name} launch in upgrade(10).eif')
-                result.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'{function_name}'|NULL|'{bll_file_name}'|NULL|'Запуск функции {function_name}({bll_file_name})'>\n")
+                log(f'ADDING to {instance} launch {bll_file_name}.{function_name} launch in upgrade(10).eif')
+                lines.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'{function_name}'|NULL|'{bll_file_name}'|NULL|'Запуск {function_name}({bll_file_name})'>\n")
                 counter += 1
-    return result
+    return counter
 
 
 # -------------------------------------------------------------------------------------------------
-def generate_upgrade10_eif(instance):
+def upgrade10_controls(instance, counter, lines):
+    dir_tables = dir_after_base_tables(instance)
+    dir_data = dir_after_base_tabledata_config(instance)
+    patch_dir_data = dir_patch_data(instance)
+    control_groups = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLGROUPS(data).eif')
+    control_constants = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLCONSTANTS(data).eif')
+    control_settings = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLSETTINGS(data).eif')
+
+    if len(control_settings) or len(control_constants):
+        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLGROUPS(10).eif'])
+        if not len(control_groups):
+            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLGROUPS(data).eif'])
+
+    if len(control_settings):
+        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
+        if not(control_constants):
+            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLCONSTANTS(data).eif'])
+    elif len(control_constants):
+        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
+        if not len(control_settings):
+            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLSETTINGS(data).eif'])
+
+    if len(control_settings) or len(control_constants):
+        lines.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'BackUpControls'|NULL|'uaControls.BLL'|NULL|'Запуск BackUpControls(uaControls)'>\n")
+        counter += 1
+        lines.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'SetupControls'|NULL|'uaControls.bll'|NULL|'Запуск SetupControls(uaControls)'>\n")
+        counter += 1
+        lines.append(f"  <{counter}|200|NULL|FALSE|TRUE|TRUE|NULL|NULL|NULL|NULL|'RestoreControls'|NULL|'uaControls.bll'|NULL|'Запуск RestoreControls(uaControls)'>\n")
+
+    return counter
+
+
+# -------------------------------------------------------------------------------------------------
+def upgrade10_eif(instance):
     data_dir = dir_patch_data(instance)
     make_dirs(data_dir)
+    copy_files_from_all_subdirectories(dir_compared_base(instance), data_dir, ['*.eif'])
+
     counter = 1
     with open(get_filename_upgrade10_eif(instance), mode='w') as f:
         f.writelines(UPGRADE10_HEADER)
-        line = make_upgrade10_eif_string_by_file_name(counter, 'Version(14).eif')
+        line = upgrade10_eif_by_file_name(counter, 'Version(14).eif')
         f.writelines(line)
         counter += 1
 
-        eif_list = list_files_of_all_subdirectories(dir_compared_base(instance), '*.eif')
-        if len(eif_list) > 0:
-            for eif_file in eif_list:
-                try:
-                    shutil.copy2(eif_file, data_dir)
-                except EnvironmentError as exc:
-                    log(f'\tUnable to copy file. {exc}')
-            eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
-            if len(eif_list) > 0:
-                for eif_file in eif_list:
-                    eif_file_name = split_filename(eif_file)
-                    line = make_upgrade10_eif_string_by_file_name(counter, eif_file_name)
-                    if line:
-                        f.writelines(line)
-                        counter += 1
+        eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
+        for eif_file in eif_list:
+            eif_file_name = split_filename(eif_file)
+            line = upgrade10_eif_by_file_name(counter, eif_file_name)
+            if line:
+                f.writelines(line)
+                counter += 1
         
-        lines = make_upgrade10_eif_strings_for_ua_bls(counter)
-        if lines:
+        lines = []
+        counter = upgrade10_ua_bls(instance, counter, lines)
+        counter = upgrade10_controls(instance, counter, lines)
+        if len(lines):
             f.writelines(lines)
 
         f.writelines(UPGRADE10_FOOTER)
@@ -1626,7 +1666,7 @@ def compile_all(lic_server, lic_profile, build_path, source_path, bll_version):
     clean(build_path, ['*.bls', '*.bll', '*.ClassInfo'])  # очищаем каталог билда от bls и bll
     begin_time = time.time()
     log('BEGIN BLS COMPILATION. Please wait...')
-    copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'], [])  # копируем в каталог билда все bls
+    copy_files_from_all_subdirectories(source_path, build_path, ['*.bls'])  # копируем в каталог билда все bls
 
     compiling_now_list = []
     compiled_list = []
@@ -1698,18 +1738,18 @@ def __copy_build_ex__(build_path, build_path_crypto, destination_path, only_get_
                 dst = os.path.join(destination_path, win_rel)
                 clean(dst)
                 log(f'COPYING BUILD {version} from "{src}" to "{dst}"')
-                copy_files_from_all_subdirectories(src, dst, ['*.exe', '*.ex', '*.bpl', '*.dll'], [])
+                copy_files_from_all_subdirectories(src, dst, ['*.exe', '*.ex', '*.bpl', '*.dll'])
                 if build_path_crypto:
                     src = os.path.join(build_path_crypto, win_rel)
                     log(f'COPYING CRYPTO BUILD {version} from "{src}" to "{dst}"')
-                    copy_files_from_all_subdirectories(src, dst, ['CryptLib.dll', 'cr_*.dll'], [])
+                    copy_files_from_all_subdirectories(src, dst, ['CryptLib.dll', 'cr_*.dll'])
         else:
             clean(destination_path)
             log(f'COPYING BUILD {version} from "{build_path}" to "{destination_path}"')
-            copy_files_from_all_subdirectories(build_path, destination_path, ['*.exe', '*.ex', '*.bpl', '*.dll'], [])
+            copy_files_from_all_subdirectories(build_path, destination_path, ['*.exe', '*.ex', '*.bpl', '*.dll'])
             if build_path_crypto:
                 log(f'COPYING CRYPTO BUILD {version} from "{build_path}" to "{destination_path}"')
-                copy_files_from_all_subdirectories(build_path_crypto, destination_path, ['CryptLib.dll', 'cr_*.dll'], [])
+                copy_files_from_all_subdirectories(build_path_crypto, destination_path, ['CryptLib.dll', 'cr_*.dll'])
     return version
 
 
@@ -1752,11 +1792,11 @@ def download_build(settings):
             # т.к. в результате __copy_build__ весь билд оказывается разделен на Win32 и Win64
             if is20 and instance == INSTANCE_BANK:
                 build_path = os.path.join(DIR_BUILD_BK, 'Win32\\Release')
-                copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'], [])
+                copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'])
             if instance == INSTANCE_BANK:
                 for filepath in settings.BuildAdditionalFolders:
                     log(f'COPYING ADDITIONAL from "{filepath}" to "{DIR_BUILD_BK}"')
-                    copy_files_from_all_subdirectories(filepath, DIR_BUILD_BK, ['*.*'], [])
+                    copy_files_from_all_subdirectories(filepath, DIR_BUILD_BK, ['*.*'])
         else:
             is20 = is_20_version(build_ic_version)
         settings.Is20Version = is20
@@ -1785,38 +1825,38 @@ def download_build(settings):
                         build_path = os.path.join(DIR_BUILD_IC, 'Win{}\\Release'.format('32'))
                         for www_path in [dir_patch_libfiles_bnk_www_bsisites_rtic_code_buildversion(build_ic_version,release),
                                         dir_patch_libfiles_bnk_www_bsisites_rtwa_code_buildversion(build_ic_version,release)]:
-                            copy_files_from_all_subdirectories(build_path, www_path, mask, [])
+                            copy_files_from_all_subdirectories(build_path, www_path, mask)
 
                 elif instance != INSTANCE_IC and settings.PlaceBuildIntoPatchBK:
                     if instance == INSTANCE_BANK:
                         build_path = os.path.join(DIR_BUILD_BK, 'Win32\\Release')
                         # это копируются все файлы, которые будут участвовать в компиляции BLS на следующем шаге
                         # т.к. в результате __copy_build__ весь билд оказывается разделен на Win32 и Win64
-                        copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'], [])
-                        # copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'], [])  # один файл CBStart.exe в корень патча
+                        copy_files_from_all_subdirectories(build_path, DIR_BUILD_BK, ['*.*'])
+                        # copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'])  # один файл CBStart.exe в корень патча
                         mask = ['bssetup.msi', 'CalcCRC.exe']
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask)
                         mask = ['BssPluginSetup.exe', 'BssPluginWebKitSetup.exe']
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_inettemp(), mask)
                     for release in ['32', '64']:  # выкладываем остальной билд для Б и БК для версий 32 и 64
                         build_path = os.path.join(DIR_BUILD_BK, f'Win{release}\\Release')
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(instance, release), mask_for_exe_dir, excluded_files)
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance, release), ['*.dll'], excluded_for_system_dir)
-                        copy_files_from_all_subdirectories(build_path, dir_patch_cbstart(instance, release), ['CBStart.exe'], [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_cbstart(instance, release), ['CBStart.exe'])
                         if instance == INSTANCE_BANK:
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk(release), ['UpdateIc.exe'], [])
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_exe(release), ['bsiset.exe'], [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk(release), ['UpdateIc.exe'])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_exe(release), ['bsiset.exe'])
                             mask = ['bsi.dll', 'bsi.jar']
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(release), mask, [])
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(release), mask)
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtwa(release), mask)
                             # заполняем TEMPLATE шаблон клиента в банковском патче
                             copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx_client_exe(release), mask_for_exe_dir, const_excluded_build_for_CLIENT)
                             copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx_client_system( release), ['*.dll'], excluded_for_system_client_dir)
                             mask = ['CalcCRC.exe', 'Setup.exe', 'Install.exe', 'eif2base.exe', 'ilKern.dll', 'GetIName.dll']
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distribx(release), mask)
                             mask = ['ilGroup.dll', 'iliGroup.dll', 'ilProt.dll', 'ilCpyDoc.dll']
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_en(release), mask, [])
-                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_ru(release), mask, [])
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_en(release), mask)
+                            copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_languagex_ru(release), mask)
 
             else:  # для билдов 15 и 17
                 build_path = DIR_BUILD_BK
@@ -1830,7 +1870,7 @@ def download_build(settings):
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(instance), ['*.dll'], excluded_for_system_dir)
 
                 if instance == INSTANCE_BANK and settings.PlaceBuildIntoPatchBK:
-                    copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'], [])  # один файл в корень
+                    copy_files_from_all_subdirectories(build_path, dir_patch(), ['CBStart.exe'])  # один файл в корень
                     # заполняем билдом TEMPLATE шаблон клиента в банковском патче
                     mask = ['*.exe', '*.ex', '*.bpl']
                     copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_exe(), mask, const_excluded_build_for_CLIENT)
@@ -1839,33 +1879,33 @@ def download_build(settings):
                     else:
                         copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib_client_system(), ['*.dll'], excluded_for_system_client_dir)
                     mask = ['CalcCRC.exe', 'Setup.exe', 'Install.exe', 'eif2base.exe', 'ilKern.dll', 'GetIName.dll']
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib(), mask, [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_distrib(), mask)
                     mask = ['ilGroup.dll', 'iliGroup.dll', 'ilProt.dll', 'ilCpyDoc.dll']
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en(), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru(), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en_client_system(), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru_client_system(), mask, [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en(), mask)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru(), mask)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_en_client_system(), mask)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_template_language_ru_client_system(), mask)
                     # заполняем LIBFILES.BNK в банковском патче билдом для БК
                     mask = ['autoupgr.exe', 'bscc.exe', 'compiler.exe', 'operedit.exe', 'testconn.exe', 'treeedit.exe']
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_add(), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_bsiset_exe(), ['bsiset.exe'], [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_license_exe(), ['protcore.exe'], [])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_add(), mask)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_bsiset_exe(), ['bsiset.exe'])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_license_exe(), ['protcore.exe'])
 
                 if instance == INSTANCE_IC and settings.PlaceBuildIntoPatchIC:
                     # заполняем LIBFILES.BNK в банковском патче билдом для ИК
                     build_path = DIR_BUILD_IC
                     mask = ['bssaxset.exe', 'inetcfg.exe', 'rts.exe', 'rtsconst.exe', 'rtsinfo.exe']
                     if settings.BuildRTSZIP:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_exe(), mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_exe(), mask)
                     else:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(INSTANCE_BANK), mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_exe(INSTANCE_BANK), mask)
                     mask = ['llComDat.dll', 'llrtscfg.dll', 'llxmlman.dll', 'msxml2.bpl']
                     if settings.BuildRTSZIP:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_system(), mask, [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_rts_system(), mask)
                     else:
-                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(INSTANCE_BANK), mask, [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(), ['bsi.dll'], [])
-                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(), ['bsi.dll'], [])
+                        copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_system(INSTANCE_BANK), mask)
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtic(), ['bsi.dll'])
+                    copy_files_from_all_subdirectories(build_path, dir_patch_libfiles_bnk_www_bsiscripts_rtadmin(), ['bsi.dll'])
                     # todo INETTEMP
     return True
 
@@ -1912,26 +1952,26 @@ def copy_bll(settings):
     bll_files_all = list(set(bll_files_all) - set(bll_files_only_rts))
 
     # копируем bll для банка по списку bll_files_all
-    copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_all, [])
+    copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_all)
     # копируем bll для RTS по списку bll_files_only_rts
     if settings.BuildRTSZIP:
         if settings.Is20Version:
             for release in ['32', '64']:
-                copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(release), bll_files_only_rts, [])
+                copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(release), bll_files_only_rts)
         else:
-            copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(), bll_files_only_rts, [])
+            copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_bnk_rts_user(), bll_files_only_rts)
     else:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_only_rts, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_BANK), bll_files_only_rts)
 
     # копируем bll для клиента по разнице списков  bll_files_all-bll_files_only_bank
     if settings.ClientEverythingInEXE:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT), bll_files_client, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT_MBA), bll_files_client_mba, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_exe(), bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT), bll_files_client)
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_exe(INSTANCE_CLIENT_MBA), bll_files_client_mba)
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_exe(), bll_files_client)
     else:
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT), bll_files_client, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT_MBA), bll_files_client_mba, [])
-        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_user(), bll_files_client, [])
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT), bll_files_client)
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_user(INSTANCE_CLIENT_MBA), bll_files_client_mba)
+        copy_files_from_all_subdirectories(DIR_BUILD_BK, dir_patch_libfiles_template_distrib_client_user(), bll_files_client)
     return True
 
 
@@ -1940,7 +1980,7 @@ def copy_yaml():
     source_dir = DIR_COMPARED_WWW_RT_IC
     if os.path.exists(source_dir):
         yaml_list = list_files_of_directory(source_dir, "*.yaml")
-        if len(yaml_list) > 0:
+        if len(yaml_list):
             destination_dir = dir_patch_libfilesreact()
             log(f'COPYING YAML files to {destination_dir}')
             copy_files_from_dir(source_dir, destination_dir, '*.yaml')
@@ -2142,7 +2182,7 @@ def patch():
 
         for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
             copy_table_10_files_for_data_files(instance)
-            generate_upgrade10_eif(instance)
+            upgrade10_eif(instance)
         continue_compilation = copy_bls(True, DIR_COMPARED_BLS, dir_patch_libfiles_source())
         need_download_build = continue_compilation or global_settings.PlaceBuildIntoPatchBK or global_settings.PlaceBuildIntoPatchIC
         build_downloaded = False
@@ -2202,3 +2242,6 @@ if __name__ == "__main__":
         compile_only()
     else:
         log(f'UNKNOWN ARGUMENT {argument}')
+
+    # for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
+    #     upgrade10_eif(instance)
