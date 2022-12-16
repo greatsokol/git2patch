@@ -47,6 +47,7 @@ DIR_COMPARED_BLS_SOURCE = os.path.join(DIR_COMPARED_BLS, 'SOURCE')
 DIR_COMPARED_BLS_SOURCE_RCK = os.path.join(DIR_COMPARED_BLS_SOURCE, 'RCK')
 DIR_COMPARED_CommonLibraries = os.path.join(DIR_COMPARED, 'SETUP', 'CommonLibraries')
 DIR_COMPARED_WWW = os.path.join(DIR_COMPARED, 'WWW')
+DIR_COMPARED_WWW_react = os.path.join(DIR_COMPARED, 'WWW_react')
 DIR_COMPARED_WWW_BSI_SITES = os.path.join(DIR_COMPARED_WWW, 'BSI_SITES')
 DIR_COMPARED_WWW_RT_IC = os.path.join(DIR_COMPARED_WWW_BSI_SITES, 'RT_IC')
 DIR_COMPARED_RT_TPL = os.path.join(DIR_COMPARED, 'RT_TPL')
@@ -1288,7 +1289,7 @@ def copy_table_10_files_for_data_files(instance):
 
 
 # -------------------------------------------------------------------------------------------------
-def upgrade10_ua_bls(instance, counter, lines):
+def upgrade10_ua_bls_files(instance, counter, lines):
     mask = ''
     if instance==INSTANCE_BANK:
         mask = 'u[ab]*.bls'
@@ -1314,24 +1315,24 @@ def upgrade10_ua_bls(instance, counter, lines):
 def upgrade10_controls(instance, counter, lines):
     dir_tables = dir_after_base_tables(instance)
     dir_data = dir_after_base_tabledata_config(instance)
-    patch_dir_data = dir_patch_data(instance)
+    patch_data_dir = dir_patch_data(instance)
     control_groups = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLGROUPS(data).eif')
     control_constants = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLCONSTANTS(data).eif')
     control_settings = list_files_of_all_subdirectories(dir_compared_base(instance), 'CONTROLSETTINGS(data).eif')
 
     if len(control_settings) or len(control_constants):
-        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLGROUPS(10).eif'])
+        copy_files_from_dir(dir_tables, patch_data_dir, ['CONTROLGROUPS(10).eif'])
         if not len(control_groups):
-            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLGROUPS(data).eif'])
+            copy_files_from_dir(dir_data, patch_data_dir, ['CONTROLGROUPS(data).eif'])
 
     if len(control_settings):
-        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
+        copy_files_from_dir(dir_tables, patch_data_dir, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
         if not(control_constants):
-            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLCONSTANTS(data).eif'])
+            copy_files_from_dir(dir_data, patch_data_dir, ['CONTROLCONSTANTS(data).eif'])
     elif len(control_constants):
-        copy_files_from_dir(dir_tables, patch_dir_data, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
+        copy_files_from_dir(dir_tables, patch_data_dir, ['CONTROLSETTINGS(10).eif', 'CONTROLCONSTANTS(10).eif'])
         if not len(control_settings):
-            copy_files_from_dir(dir_data, patch_dir_data, ['CONTROLSETTINGS(data).eif'])
+            copy_files_from_dir(dir_data, patch_data_dir, ['CONTROLSETTINGS(data).eif'])
 
     if len(control_settings) or len(control_constants):
         lines.append(f"  <{counter}|200|NULL|TRUE|FALSE|TRUE|NULL|NULL|NULL|NULL|'BackUpControls'|NULL|'uaControls.BLL'|NULL|'Запуск BackUpControls(uaControls)'>\n")
@@ -1344,32 +1345,45 @@ def upgrade10_controls(instance, counter, lines):
 
 
 # -------------------------------------------------------------------------------------------------
+def upgrade10_db_structures(instance, counter, lines):
+    lines.append(upgrade10_eif_by_file_name(counter, 'Version(14).eif'))
+    counter += 1
+    patch_data_dir = dir_patch_data(instance)
+    eif_list = list_files_of_all_subdirectories(patch_data_dir, '*.eif')
+    for eif_file in eif_list:
+        eif_file_name = split_filename(eif_file)
+        line = upgrade10_eif_by_file_name(counter, eif_file_name)
+        if line:
+            lines.append(line)
+            counter += 1
+    return counter
+
+
+# -------------------------------------------------------------------------------------------------
+def upgrade10_react_build(instance, counter, lines):
+    if instance==INSTANCE_BANK:
+        if os.path.exists(DIR_COMPARED_WWW_react):
+            lines.append('  TODO: НУЖНА СБОРКА РЕДИЗАЙНА!!!\n')
+            counter +=1
+    return counter
+
+
+# -------------------------------------------------------------------------------------------------
 def upgrade10_eif(instance):
-    data_dir = dir_patch_data(instance)
-    make_dirs(data_dir)
-    copy_files_from_all_subdirectories(dir_compared_base(instance), data_dir, ['*.eif'])
-
+    patch_data_dir = dir_patch_data(instance)
+    make_dirs(patch_data_dir)
+    copy_files_from_all_subdirectories(dir_compared_base(instance), patch_data_dir, ['*.eif'])
+    
+    lines = []
+    lines.append(UPGRADE10_HEADER)
     counter = 1
+    counter = upgrade10_db_structures(instance, counter, lines)
+    counter = upgrade10_ua_bls_files(instance, counter, lines)
+    counter = upgrade10_controls(instance, counter, lines)
+    counter = upgrade10_react_build(instance, counter, lines)
+
     with open(get_filename_upgrade10_eif(instance), mode='w') as f:
-        f.writelines(UPGRADE10_HEADER)
-        line = upgrade10_eif_by_file_name(counter, 'Version(14).eif')
-        f.writelines(line)
-        counter += 1
-
-        eif_list = list_files_of_all_subdirectories(data_dir, '*.eif')
-        for eif_file in eif_list:
-            eif_file_name = split_filename(eif_file)
-            line = upgrade10_eif_by_file_name(counter, eif_file_name)
-            if line:
-                f.writelines(line)
-                counter += 1
-        
-        lines = []
-        counter = upgrade10_ua_bls(instance, counter, lines)
-        counter = upgrade10_controls(instance, counter, lines)
-        if len(lines):
-            f.writelines(lines)
-
+        f.writelines(lines)
         f.writelines(UPGRADE10_FOOTER)
 
 
@@ -1495,7 +1509,7 @@ def open_encoding_aware(path):
     return None
 
 
-# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------Z
 def __replace_unwanted_symbols__(pattern, string):
     find_all = re.findall(pattern, string, flags=re.MULTILINE)
     for find_here in find_all:
@@ -1503,6 +1517,7 @@ def __replace_unwanted_symbols__(pattern, string):
     return string
 
 
+# -------------------------------------------------------------------------------------------------Z
 def replace_unwanted_symbols(text):
     # удаляем комментарии, которые располагаются между фигурными скобками "{ .. }"
     text = __replace_unwanted_symbols__(r'{[\S\s]*?}', text)
@@ -2242,6 +2257,3 @@ if __name__ == "__main__":
         compile_only()
     else:
         log(f'UNKNOWN ARGUMENT {argument}')
-
-    # for instance in [INSTANCE_BANK, INSTANCE_CLIENT, INSTANCE_CLIENT_MBA]:
-    #     upgrade10_eif(instance)
