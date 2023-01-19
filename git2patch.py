@@ -1153,7 +1153,7 @@ def make_upgrade10_eif_string_for_tables(file_name):
     elif file_name_lower == 'linktxt':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'NameFormat'|NULL|NULL|NULL|NULL|'Таблицы'> #TODO проверьте data таблицы"
     elif file_name_lower == 'absmanagertype':
-        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>"
+        result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|FALSE|TRUE|TRUE|'ID'|NULL|NULL|NULL|NULL|'Таблицы'>" #TODO обязательно дельту"
     elif file_name_lower == 'dcmversions':
         result = "<{}|{}|'{}'|TRUE|TRUE|TRUE|TRUE|TRUE|TRUE|'SchemeID,PatchNewVersion'|NULL|NULL|NULL|NULL|'Таблицы'>"
     elif file_name_lower == 'transschema':
