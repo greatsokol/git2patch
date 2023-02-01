@@ -841,6 +841,21 @@ def copy_tree(src, destination, ignore=None):
 
 
 # -------------------------------------------------------------------------------------------------
+def copy_file_or_dir(dir_name, file_name, destination, dirs_allowed=False):
+    path = os.path.join(dir_name, file_name)
+    if os.path.isfile(path):
+        log(f'\tcopying {path}')
+        make_dirs(destination)
+        shutil.copy2(path, destination)
+    else:
+        if dirs_allowed:  
+            log(f'\tcopying DIR with contents {path}')
+            clean(os.path.join(destination, file_name))
+            copy_tree(path, os.path.join(destination, file_name))
+        else:
+            log(f'\tsomething wrong {path} -> {destination}')
+
+# -------------------------------------------------------------------------------------------------
 def make_dirs(path):
     try:
         if not os.path.exists(path):
@@ -1068,37 +1083,17 @@ def __compare_and_copy_dirs_recursively__(before, after, where_to_copy):
 
     if len(dircmp.diff_files):
         for file in dircmp.diff_files:
-            path = os.path.join(after, file)
-            if os.path.isfile(path):
-                log(f'\tcopying {path}')
-                make_dirs(where_to_copy)
-                shutil.copy2(path, where_to_copy)
-            else:
-                log(f'\tsomething wrong {path} -> {where_to_copy}')
+            copy_file_or_dir(after, file, where_to_copy)
     
     if dircmp.same_files:
         match, mismatch, errors = filecmp.cmpfiles(before, after, dircmp.same_files, shallow=False)
         if mismatch:
             for file in mismatch:
-                path = os.path.join(after, file)
-                if os.path.isfile(path):
-                    log(f'\tcopying after deep comparition {path}')
-                    make_dirs(where_to_copy)
-                    shutil.copy2(path, where_to_copy)
-                else:
-                    log(f'\tsomething wrong {path} -> {where_to_copy}')
+                copy_file_or_dir(after, file, where_to_copy)
 
     if dircmp.right_only:
-        for file in dircmp.right_only:
-            path = os.path.join(after, file)
-            if os.path.isfile(path):
-                log(f'\tcopying {path}')
-                make_dirs(where_to_copy)
-                shutil.copy2(path, where_to_copy)
-            else:
-                log(f'\tcopying DIR with contents {path}')
-                clean(os.path.join(where_to_copy, file))
-                copy_tree(path, os.path.join(where_to_copy, file))
+        for file_or_dir in dircmp.right_only:
+            copy_file_or_dir(after, file_or_dir, where_to_copy, True)
 
 
 # -------------------------------------------------------------------------------------------------
