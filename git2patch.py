@@ -28,8 +28,9 @@ if python_version < '3.10':
 
 THREAD_NAME_PREFIX='th'
 EXECUTOR = concurrent.futures.ThreadPoolExecutor(thread_name_prefix=THREAD_NAME_PREFIX) #max_workers=4, 
-LOCK = threading.RLock()
-CONDITION = threading.Condition()
+LOG_LOCK = threading.RLock()
+COMPILED_LOCK = threading.RLock()
+COMPILING_NOW_CONDITION = threading.Condition()
 
 INSTANCE_BANK = "BANK"
 INSTANCE_IC = "IC"
@@ -368,15 +369,12 @@ def current_time_as_string(): return datetime.datetime.fromtimestamp(time.time()
 
 # -------------------------------------------------------------------------------------------------
 def log(message_text):
-    LOCK.acquire(True)
-    try:
+    with LOG_LOCK:
         log_file_name = os.path.join(os.path.abspath(''), filename('log'))
         with open(log_file_name, mode='a') as f:
             message_text = f'[{current_time_as_string()}][{threading.get_ident()}_{threading.current_thread().name}] {str(message_text)}'
             print(message_text)
             f.writelines('\n' + message_text)
-    finally:
-        LOCK.release()
 
 
 def get_last_element_of_path(path):
@@ -400,6 +398,12 @@ def split_last_dir_name(path):
     if os.path.isdir(path):
         result = get_last_element_of_path(path)
     return result
+
+def split_path_to_dir_and_filename(path):
+    file_name_and_dir = os.path.split(os.path.abspath(path))
+    file_name_without_path = file_name_and_dir[1].lower()
+    file_dir = file_name_and_dir[0]
+    return file_dir, file_name_without_path
 
 
 UPGRADE10_HEADER = \
@@ -1493,17 +1497,21 @@ def extract_build_version(build_path):
 
 # -------------------------------------------------------------------------------------------------
 def open_encoding_aware(path):
-    encodings = ['windows-1251', 'utf-8']
-    for enc in encodings:
-        try:
-            fh = open(path, 'r', encoding=enc)
-            fh.readlines()
-            fh.seek(0)
-        except ValueError:
-            pass
-        else:
-            return fh
-    return None
+    try:
+        encodings = ['windows-1251', 'utf-8']
+        for enc in encodings:
+            try:
+                fh = open(path, 'r', encoding=enc)
+                fh.readlines()
+                fh.seek(0)
+            except ValueError:
+                pass
+            else:
+                return fh
+        return None
+    except BaseException as exc:
+        log(f'ERROR WHEN OPENING FILE {path} -> {exc}')
+        return None
 
 
 # -------------------------------------------------------------------------------------------------Z
@@ -1534,18 +1542,22 @@ def bls_get_exports(file_name):
 
 
 # -------------------------------------------------------------------------------------------------
-def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
-    file_name_and_dir = os.path.split(os.path.abspath(file_name))
-    file_name_without_path = file_name_and_dir[1].lower()
-    file_dir = file_name_and_dir[0]
-    with open_encoding_aware(file_name) as f:
+def bls_get_uses_graph(file_dir, file_name, compiling_now_list, compiled_list, bls_uses_graph):
+    path = os.path.join(file_dir, file_name)
+    with COMPILING_NOW_CONDITION:
+        while file_compiling_now(file_name, compiling_now_list):
+            COMPILING_NOW_CONDITION.wait()
+    if file_compiled(file_name, compiled_list):
+            return # если файл уже откомпилирован 
+    
+    with open_encoding_aware(path) as f:
         if f:
             text = replace_unwanted_symbols(f.read())
             # находим текст между словом "uses" и ближайшей точкой с запятой
             list_of_uses = re.findall(r'(?s)(?<=\buses\s)(.*?)(?=;)', text, flags=re.IGNORECASE)
             
             # добавляем пустой элемент для файла "file_name", на случай, если файл не имеет uses
-            bls_uses_graph.update({file_name_without_path: [file_name, []]})
+            bls_uses_graph.update({file_name: [path, []]})
 
             if len(list_of_uses):
                 for text_of_uses in list_of_uses:
@@ -1554,8 +1566,8 @@ def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
                     if uses_list:
                         # проверим, что такой файл еще не был обработан
 
-                        item_already_in_list = bls_uses_graph.get(file_name_without_path)
-                        # если элемент с названием "file_name_without_path" уже есть в списке bls_uses_graph
+                        item_already_in_list = bls_uses_graph.get(file_name)
+                        # если элемент с названием "file_name" уже есть в списке bls_uses_graph
                         if item_already_in_list:
                             # то дополним его [список_зависимостей] списком "uses_list"
                             item_already_in_list[1].extend(uses_list)
@@ -1563,14 +1575,14 @@ def bls_get_uses_graph(file_name, compiled_list, bls_uses_graph):
                             # TODO: ЭТА ВЕТКА НЕ НУЖНА, НАДО УДАЛИТЬ (ВЫШЕ УЖЕ ДОБАВЛЯЮ ПУСТОЙ ЭЛЕМЕНТ)
                             # если файла нет в списке зависимостей,
                             # то добавим "{название_файла: [полное_название_с_путем, [список_зависимостей]]}"
-                            # bls_uses_graph.update({file_name_without_path: [file_name, uses_list]})
+                            # bls_uses_graph.update({file_name: [file_name, uses_list]})
                             pass
                         
                         for uses_item in uses_list:
                             item_already_in_list = bls_uses_graph.get(uses_item)
                             item_already_compiled = uses_item in compiled_list
                             if not item_already_in_list and not item_already_compiled:
-                                bls_get_uses_graph(os.path.join(file_dir, uses_item), compiled_list, bls_uses_graph)
+                                bls_get_uses_graph(file_dir, uses_item, compiling_now_list, compiled_list, bls_uses_graph)
     return bls_uses_graph
 
 
@@ -1603,25 +1615,27 @@ def compile_one_file(build_path, bls_file_name, bls_path, uses_list, lic_server,
 
 # -------------------------------------------------------------------------------------------------
 def file_compiled(bls_file_name, compiled_list):
-    with LOCK:
+    with COMPILED_LOCK:
         return bls_file_name in compiled_list
+
+
+# -------------------------------------------------------------------------------------------------
+def file_compiling_now(bls_file_name, compiling_now_list):
+    return bls_file_name in compiling_now_list
 
 
 # -------------------------------------------------------------------------------------------------
 def compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph, bls_file_name, 
                             compiling_now_list, compiled_list, files_count, bll_version, failed_files):
-    
     bls_file_name = bls_file_name.lower()
-
-    with CONDITION:
-        while bls_file_name in compiling_now_list:
-            CONDITION.wait()
-        compiling_now_list.append(bls_file_name)
-
     try:
+        with COMPILING_NOW_CONDITION:
+            while file_compiling_now(bls_file_name, compiling_now_list):
+                COMPILING_NOW_CONDITION.wait()
+            compiling_now_list.append(bls_file_name)
+
         if file_compiled(bls_file_name, compiled_list):
-            # если файл уже откомпилирован
-            return
+            return # если файл уже откомпилирован
 
         bls_item_info = bls_uses_graph.get(bls_file_name)
         if not bls_item_info:
@@ -1649,26 +1663,28 @@ def compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph, bls_f
         if compile_one_file(build_path, bls_file_name, bls_file_path,
                         uses_list, lic_server, lic_profile, bll_version,
                         failed_files, percents):
-            compiled_list.append(bls_file_name)  # добавляем в список учтенных файлов
+            with COMPILED_LOCK:
+                compiled_list.append(bls_file_name)  # добавляем в список учтенных файлов
     
     finally:
-        with CONDITION:
+        with COMPILING_NOW_CONDITION:
             compiling_now_list.remove(bls_file_name)
-            CONDITION.notify_all()
+            COMPILING_NOW_CONDITION.notify_all()
 
 
 # -------------------------------------------------------------------------------------------------
-def compile_thread_function(lic_server, lic_profile, build_path, file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files):
+def compile_thread_function(lic_server, lic_profile, build_path, path, compiling_now_list, compiled_list, files_count, bll_version, failed_files):
+    file_dir, file_name = split_path_to_dir_and_filename(path)
+    
     if file_compiled(file_name, compiled_list):
         return
-    
-    bls_uses_graph = {}
 
-    bls_get_uses_graph(file_name, compiled_list, bls_uses_graph)  # строим граф зависимостей по строкам uses    
+    bls_uses_graph = {} # строим граф зависимостей по строкам uses
+    bls_get_uses_graph(file_dir, file_name, compiling_now_list, compiled_list, bls_uses_graph)  
     try:
         for bls_file_name in bls_uses_graph:  # компилируем все bls
             compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph,
-                                            bls_file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files)
+                bls_file_name, compiling_now_list, compiled_list, files_count, bll_version, failed_files)
     except FileNotFoundError as exc:
         log(f'\tERROR: {exc}')
 
