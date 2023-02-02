@@ -1681,6 +1681,10 @@ def compile_thread_function(lic_server, lic_profile, build_path, path, compiling
 
     bls_uses_graph = {} # строим граф зависимостей по строкам uses
     bls_get_uses_graph(file_dir, file_name, compiling_now_list, compiled_list, bls_uses_graph)  
+
+    if file_compiled(file_name, compiled_list):
+        return
+
     try:
         for bls_file_name in bls_uses_graph:  # компилируем все bls
             compile_recursive(lic_server, lic_profile, build_path, bls_uses_graph,
